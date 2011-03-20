@@ -9,6 +9,11 @@
 
 
 #include <XnCppWrapper.h>
+
+/*   MAC OSX Headers */
+//#include <GLUT/glut.h>
+//#include <OpenGL/glu.h>
+/*  LINUX Headers */
 #include <GL/glut.h>
 #include <GL/glu.h>
 
