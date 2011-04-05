@@ -46,7 +46,7 @@ XnBool g_bDrawPixels = TRUE;
 XnBool g_bDrawSkeleton = TRUE;
 XnBool g_bPrintID = TRUE;
 XnBool g_bPrintState = TRUE;
-
+XnBool g_runfile = TRUE;//True will set program to run off prerecorded file otherwise a kinect is required to run
 
 #include <GL/glut.h>
 
@@ -149,7 +149,8 @@ void glutDisplay (void)
 	if (!g_bPause)
 	{
 		// Read next available data
-		g_Context.WaitAndUpdateAll();
+		g_Context.WaitAnyUpdateAll();
+    
 	}
 
 		// Process the data
@@ -227,7 +228,7 @@ void glInit (int * pargc, char ** argv)
 	glDisableClientState(GL_COLOR_ARRAY);
 }
 
-#define SAMPLE_XML_PATH "../../../../Data/SamplesConfig.xml"
+#define SAMPLE_XML_PATH "KinConfig.xml"
 
 #define CHECK_RC(nRetVal, what)										\
 	if (nRetVal != XN_STATUS_OK)									\
@@ -238,16 +239,19 @@ void glInit (int * pargc, char ** argv)
 
 int main(int argc, char **argv)
 {
-    outpnt.open("kindat");
-        g_Context.Init(); //initializing the Open NI library( must be called before any other Open Ni Function( except xnInitFromXmlFile());
-        g_DepthGenerator.Create(g_Context);//creates a depth generator
+    outpnt.open("kindat");//openfile to save data
+  
+    g_Context.Init(); //initializing the Open NI library( must be called before any other Open Ni Function( except xnInitFromXmlFile());
 
+        if(g_runfile){
+     //g_Context.InitFromXmlFile("KinConfig.xml");
+       g_Context.OpenFileRecording("SkeletonRec.oni");
+    }
+
+        g_DepthGenerator.Create(g_Context);//creates a depth generator
 	g_Context.FindExistingNode(XN_NODE_TYPE_DEPTH, g_DepthGenerator);//Returns the first found existing node of the specified type(pointer to context. ,type,handle to node)
-	
 	g_Context.FindExistingNode(XN_NODE_TYPE_USER, g_UserGenerator);//
-	
         g_UserGenerator.Create(g_Context);//creates a user generator
-		
 
 	XnCallbackHandle hUserCallbacks, hCalibrationCallbacks, hPoseCallbacks;//XnCallbackHandle-Handle to a registered callback function
 	//register***Callbacks(dectection start, detection end, null, callback handle)
@@ -267,7 +271,6 @@ int main(int argc, char **argv)
 	}
 
 	g_UserGenerator.GetSkeletonCap().SetSkeletonProfile(XN_SKEL_PROFILE_ALL);
-
 	g_Context.StartGeneratingAll();//Make sure all generators are generating data.
 	
 
