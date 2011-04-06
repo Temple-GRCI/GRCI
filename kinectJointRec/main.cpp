@@ -20,7 +20,18 @@
 *                                                                            *
 *****************************************************************************/
 
-//status updates have been removed to improve readablity
+
+/**
+ * Joint Recognition
+ *
+ * Changes:
+ *	* Status updates have been removed to improve readability (PR)
+ *	* Added comment blocks for all functions (EO)
+ *
+ * @project     kinectJointRec
+ * @author      CIS 3287 - Computer Vision team
+ * @link        http://openni.ninesixweb.com
+ */
 
 
 //---------------------------------------------------------------------------
@@ -50,8 +61,8 @@ XnBool g_bDrawPixels = TRUE;
 XnBool g_bDrawSkeleton = TRUE;
 XnBool g_bPrintID = TRUE;
 XnBool g_bPrintState = TRUE;
-XnBool g_runfile = TRUE;//True will set program to run off prerecorded file otherwise a kinect is required to run
-XnBool g_Record = FALSE;//This is set to true to record a new .oni file
+XnBool g_runfile = TRUE; // Use mock node(T) or kinect(F)
+XnBool g_Record = FALSE; // Record a new .oni file(T)
 
 
 #include <GL/glut.h>
@@ -71,47 +82,112 @@ XnBool g_bQuit = false;
 void CleanupExit()
 {
 	g_Context.Shutdown();
-rename("recording.tmp.oni", "recording.oni");
+	rename("recording.tmp.oni", "recording.oni");
 	exit (1);
 }
 
-// Callback: New user was detected
+/**
+ * User_NewUser() - Callback Function
+ *
+ * Detects the presense of a new user.
+ *
+ * @param generator
+ * @param nId			XnUserID	Identification for the user.
+ * @param pCookie
+ */
+
 void XN_CALLBACK_TYPE User_NewUser(xn::UserGenerator& generator, XnUserID nId, void* pCookie)
 {
 	printf("New User %d\n", nId);
 	// New user found
 	if (g_bNeedPose)
 	{
-            //getPoseDetectionCap() -Gets an PoseDetectionCapability object for accessing Pose-Detection functionality(allows for a user generator to recongize when a
-            // user is ina specific pose
-            //
-		g_UserGenerator.GetPoseDetectionCap().StartPoseDetection(g_strPose, nId);//starts detection for specified pose and the user id
-                printf("**** looking for pose named: %s\n",g_strPose);
-        }
+		/**
+		 * GetPoseDetectionCap()
+		 * 
+		 * Gets a PoseDetectionCapability object for accessing
+		 * Pose-Detection functionality (allows a user generator to
+		 * recognize when a user is in a specific pose)
+           */
+		
+		// starts detection for specified pose and the user id
+          g_UserGenerator.GetPoseDetectionCap().StartPoseDetection(g_strPose, nId);
+          printf("**** looking for pose named: %s\n",g_strPose);
+     }
 	else
 	{
 		g_UserGenerator.GetSkeletonCap().RequestCalibration(nId, TRUE);
 	}
 }
-// Callback: An existing user was lost
+
+/**
+ * User_LostUser() - Callback Fuction
+ *
+ * Code to execute when a user is lost.
+ *
+ * @param generator
+ * @param nId			XnUserID	Identification for the user.
+ * @param pCookie
+ */
+
 void XN_CALLBACK_TYPE User_LostUser(xn::UserGenerator& generator, XnUserID nId, void* pCookie)
 {
 	printf("Lost user %d\n", nId);
 }
-// Callback: Detected a pose
-void XN_CALLBACK_TYPE UserPose_PoseDetected(xn::PoseDetectionCapability& capability, const XnChar* strPose, XnUserID nId, void* pCookie)
+
+/**
+ * UserPose_PoseDetected() - Callback Function
+ *
+ * Executes when a pose is detected by OpenNI.
+ *
+ * @param capability
+ * @param strPose		XnChar*	Name of the detected pose.
+ * @param nId			XnUserID	User who performed the detected pose.
+ * @param pCookie
+ */
+
+void XN_CALLBACK_TYPE UserPose_PoseDetected(xn::PoseDetectionCapability& capability, 
+								    const XnChar* strPose,
+								    XnUserID nId, void* pCookie)
 {
 	printf("Pose %s detected for user %d\n", strPose, nId);
 	g_UserGenerator.GetPoseDetectionCap().StopPoseDetection(nId);
 	g_UserGenerator.GetSkeletonCap().RequestCalibration(nId, TRUE);
 }
-// Callback: Started calibration
-void XN_CALLBACK_TYPE UserCalibration_CalibrationStart(xn::SkeletonCapability& capability, XnUserID nId, void* pCookie)
+
+/**
+ * UserCalibration_CalibrationStart() - Calback Function
+ *
+ * Started Calibration.
+ * TODO: Get this to be automatic when a user enters.
+ *
+ * @param capability
+ * @param nId			XnUserID	User Identification.
+ * @param pCookie
+ */
+
+void XN_CALLBACK_TYPE UserCalibration_CalibrationStart(xn::SkeletonCapability& capability, 
+											XnUserID nId,
+											void* pCookie)
 {
 	printf("Calibration started for user %d\n", nId);
 }
-// Callback: Finished calibration
-void XN_CALLBACK_TYPE UserCalibration_CalibrationEnd(xn::SkeletonCapability& capability, XnUserID nId, XnBool bSuccess, void* pCookie)
+
+/**
+ * UserCalibration_CalibrationEnd() - Callback Function
+ *
+ * If calibrated it places a skeleton on the user,
+ * otherwise it starts looking for poses again.
+ *
+ * @param capability
+ * @param nId			XnUserID	User Identification.
+ * @param bSuccess		XnBool	True if calibration succeeded.
+ * @param pCookie
+ */
+void XN_CALLBACK_TYPE UserCalibration_CalibrationEnd(xn::SkeletonCapability& capability,
+										   XnUserID nId,
+										   XnBool bSuccess,
+										   void* pCookie)
 {
 	if (bSuccess)
 	{
@@ -134,10 +210,16 @@ void XN_CALLBACK_TYPE UserCalibration_CalibrationEnd(xn::SkeletonCapability& cap
 	}
 }
 
-// this function is called each frame
+/**
+ * glutDisplay()
+ *
+ * This gets passed to glut for displaying each frame.
+ *
+ * @param void
+ */
+
 void glutDisplay (void)
 {
-
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Setup the OpenGL viewpoint
@@ -155,21 +237,27 @@ void glutDisplay (void)
 	if (!g_bPause)
 	{
 		// Read next available data
-      
-              g_Context.WaitAnyUpdateAll();
-   if(g_Record)
-            recorder.Record();
-      
-	}
+		g_Context.WaitAnyUpdateAll();
+		if(g_Record)
+			recorder.Record();
+		}
 
 		// Process the data
 		g_DepthGenerator.GetMetaData(depthMD);
-		g_UserGenerator.GetUserPixels(0, sceneMD);//Get the pixels that belong to a user.
+		// Get the pixels that belong to a user
+		g_UserGenerator.GetUserPixels(0, sceneMD);
 		DrawDepthMap(depthMD, sceneMD);
 
-	glutSwapBuffers();//glutSwapBuffers swaps the buffers of the current window if double buffered.
+		// Swaps the buffers of the current window if double buffered.
+		glutSwapBuffers();
 }
 
+/**
+ * glutIdle()
+ *
+ * Does this only get called if nothing moves in the frame?
+ *
+ */
 void glutIdle (void)
 {
 	if (g_bQuit) {
@@ -180,43 +268,65 @@ void glutIdle (void)
 	glutPostRedisplay();
 }
 
+/**
+ * glutKeyboard()
+ *
+ * Perform actions based off of what key the user presses.
+ * This gets passed to glut to handle input.
+ *
+ * @param key	unsigned char		name/value of the key pressed
+ * @param x	int				purpose unknown (Possibly mouse coords)
+ * @param y	int				purpose unknown
+ */
+
 void glutKeyboard (unsigned char key, int x, int y)
 {
 	switch (key)
 	{
-	case 27:
-		CleanupExit();
-	case 'b':
-		// Draw background?
-		g_bDrawBackground = !g_bDrawBackground;
-		break;
-	case 'x':
-		// Draw pixels at all?
-		g_bDrawPixels = !g_bDrawPixels;
-		break;
-	case 's':
-		// Draw Skeleton?
-		g_bDrawSkeleton = !g_bDrawSkeleton;
-		break;
-	case 'i':
-		// Print label?
-		g_bPrintID = !g_bPrintID;
-		break;
-	case 'l':
-		// Print ID & state as label, or only ID?
-		g_bPrintState = !g_bPrintState;
-		break;
-	case'p':
-		g_bPause = !g_bPause;
-		break;
-        case'r':
-		g_bRecord = !g_bRecord;
-                if(!g_bRecord)
-                    outpnt<<"$\n";
-                printf("Record on/off\n");
-		break;
+		case 27:
+			// Escape
+			CleanupExit();
+		case 'b':
+			// Draw background?
+			g_bDrawBackground = !g_bDrawBackground;
+			break;
+		case 'x':
+			// Draw pixels at all?
+			g_bDrawPixels = !g_bDrawPixels;
+			break;
+		case 's':
+			// Draw Skeleton?
+			g_bDrawSkeleton = !g_bDrawSkeleton;
+			break;
+		case 'i':
+			// Print label?
+			g_bPrintID = !g_bPrintID;
+			break;
+		case 'l':
+			// Print ID & state as label, or only ID?
+			g_bPrintState = !g_bPrintState;
+			break;
+		case'p':
+			g_bPause = !g_bPause;
+			break;
+		case'r':
+			g_bRecord = !g_bRecord;
+			if(!g_bRecord)
+				outpnt<<"$\n";
+				printf("Record on/off\n");
+			break;
 	}
-}
+} // end glutKeyboard
+
+/**
+ * glInit()
+ *
+ * Configuration for glut.
+ *
+ * @param pargc	int*		points to the number of command line args.
+ * @param argv		char**	points to the command line args.
+ */
+
 void glInit (int * pargc, char ** argv)
 {
 	glutInit(pargc, argv);
@@ -248,37 +358,51 @@ void glInit (int * pargc, char ** argv)
 
 int main(int argc, char **argv)
 {
-    outpnt.open("kindat");//openfile to save data
-    std::cout<<"\n\n\nKEYBOARD TOGGLE:(focus must be on GL window)\n b-background \n x-draw all pixels \n s-Skeleton \n i-print labels \n l- print state \n p-pause \n r-record data points\n";
-  
-    g_Context.Init(); //initializing the Open NI library( must be called before any other Open Ni Function( except xnInitFromXmlFile());
+	// Handles to a registered callback function
+	XnCallbackHandle hUserCallbacks, hCalibrationCallbacks, hPoseCallbacks;
 
-        if(g_runfile){
-     //g_Context.InitFromXmlFile("KinConfig.xml");//uses an xml file to set config of nodes
-      //g_Context.OpenFileRecording("SkeletonRec.oni");// this will play sample data downloaded from open ni. replace file name to any file to play
-       g_Context.OpenFileRecording("PRrec4w.oni");
+	outpnt.open("kindat"); // openfile to save data
+	std::cout<<"\n\n\nKEYBOARD TOGGLE:(focus must be on GL window)\n b-background \n "
+			 "x-draw all pixels \n s-Skeleton \n i-print labels \n l- print state \n "
+			 "p-pause \n r-record data points\n";
 
-        }
+	// must be called before any OpenNI function ( except xnInitFromXmlFile() )
+	g_Context.Init();
 
-        g_DepthGenerator.Create(g_Context);//creates a depth generator
-        g_UserGenerator.Create(g_Context);//creates a user generator
-        g_ImageGenerator.Create(g_Context);//creates a IMage generator
+	if(g_runfile){
+		// Uses an xml file to set config of nodes
+		//g_Context.InitFromXmlFile("KinConfig.xml");
+		// Playing sample recording. Replace file name to any file to play.
+		//g_Context.OpenFileRecording("SkeletonRec.oni");
+		g_Context.OpenFileRecording("PRrec4w.oni");
+	}
+
+	g_DepthGenerator.Create(g_Context);	// creates a depth generator
+	g_UserGenerator.Create(g_Context);		// creates a user generator
+	g_ImageGenerator.Create(g_Context);	// creates a image generator
+
+	// Returns the first found existing node of the specified type(pointer to context. ,type,handle to node)
+	g_Context.FindExistingNode(XN_NODE_TYPE_DEPTH, g_DepthGenerator);
+	g_Context.FindExistingNode(XN_NODE_TYPE_USER, g_UserGenerator);
+	g_Context.FindExistingNode(XN_NODE_TYPE_IMAGE,g_ImageGenerator);
         
-	g_Context.FindExistingNode(XN_NODE_TYPE_DEPTH, g_DepthGenerator);//Returns the first found existing node of the specified type(pointer to context. ,type,handle to node)
-	g_Context.FindExistingNode(XN_NODE_TYPE_USER, g_UserGenerator);//
-        g_Context.FindExistingNode(XN_NODE_TYPE_IMAGE,g_ImageGenerator);
-        
-        
-        if(g_Record){
-        recorder.Create(g_Context);//creates a recorder node
-        recorder.SetDestination(XN_RECORD_MEDIUM_FILE,"recording.tmp.oni");
-        recorder.AddNodeToRecording(g_DepthGenerator);
-       // recorder.AddNodeToRecording(g_ImageGenerator);
-        }
+	if(g_Record){
+		recorder.Create(g_Context);	// creates a recorder node
+		recorder.SetDestination(XN_RECORD_MEDIUM_FILE,"recording.tmp.oni");
+		recorder.AddNodeToRecording(g_DepthGenerator);
+		//recorder.AddNodeToRecording(g_ImageGenerator);
+	}
 
-
-	XnCallbackHandle hUserCallbacks, hCalibrationCallbacks, hPoseCallbacks;//XnCallbackHandle-Handle to a registered callback function
-	//register***Callbacks(dectection start, detection end, null, callback handle)
+	/**
+	 * Register____Callbacks()
+	 *
+	 * For your information.
+	 *
+      * @param detection start	XnCallbackHandle
+      * @param detection end		XnCallbackHandle
+	 * @param null				What the hell is a pCookie?
+	 * @param callback handle	XnCallbackHandle
+      */
 	g_UserGenerator.RegisterUserCallbacks(User_NewUser, User_LostUser, NULL, hUserCallbacks);//registers to user callbacks which are defined above
 	g_UserGenerator.GetSkeletonCap().RegisterCalibrationCallbacks(UserCalibration_CalibrationStart, UserCalibration_CalibrationEnd, NULL, hCalibrationCallbacks);
 
@@ -301,6 +425,6 @@ int main(int argc, char **argv)
 	glInit(&argc, argv);
 	glutMainLoop();
         
-        outpnt.close();
+	outpnt.close();
         
 }
