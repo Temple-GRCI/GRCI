@@ -31,12 +31,16 @@
 #include <XnCppWrapper.h>
 #include "SceneDrawer.h"
 #include <fstream>
+#include<stdio.h>
+#include<iostream>
 //---------------------------------------------------------------------------
 // Globals
 //---------------------------------------------------------------------------
 xn::Context g_Context;// represents an OpenNi Context Object
 xn::DepthGenerator g_DepthGenerator;
 xn::UserGenerator g_UserGenerator;
+xn::ImageGenerator g_ImageGenerator;
+xn::Recorder recorder;
 std::ofstream outpnt;
 
 XnBool g_bNeedPose = FALSE;
@@ -47,6 +51,8 @@ XnBool g_bDrawSkeleton = TRUE;
 XnBool g_bPrintID = TRUE;
 XnBool g_bPrintState = TRUE;
 XnBool g_runfile = TRUE;//True will set program to run off prerecorded file otherwise a kinect is required to run
+XnBool g_Record = FALSE;//This is set to true to record a new .oni file
+
 
 #include <GL/glut.h>
 
@@ -65,7 +71,7 @@ XnBool g_bQuit = false;
 void CleanupExit()
 {
 	g_Context.Shutdown();
-
+rename("recording.tmp.oni", "recording.oni");
 	exit (1);
 }
 
@@ -149,8 +155,11 @@ void glutDisplay (void)
 	if (!g_bPause)
 	{
 		// Read next available data
-		g_Context.WaitAnyUpdateAll();
-    
+      
+              g_Context.WaitAnyUpdateAll();
+   if(g_Record)
+            recorder.Record();
+      
 	}
 
 		// Process the data
@@ -240,18 +249,33 @@ void glInit (int * pargc, char ** argv)
 int main(int argc, char **argv)
 {
     outpnt.open("kindat");//openfile to save data
+    std::cout<<"\n\n\nKEYBOARD TOGGLE:(focus must be on GL window)\n b-background \n x-draw all pixels \n s-Skeleton \n i-print labels \n l- print state \n p-pause \n r-record data points\n";
   
     g_Context.Init(); //initializing the Open NI library( must be called before any other Open Ni Function( except xnInitFromXmlFile());
 
         if(g_runfile){
-     //g_Context.InitFromXmlFile("KinConfig.xml");
-       g_Context.OpenFileRecording("SkeletonRec.oni");
-    }
+     //g_Context.InitFromXmlFile("KinConfig.xml");//uses an xml file to set config of nodes
+      //g_Context.OpenFileRecording("SkeletonRec.oni");// this will play sample data downloaded from open ni. replace file name to any file to play
+       g_Context.OpenFileRecording("PRrec4w.oni");
+
+        }
 
         g_DepthGenerator.Create(g_Context);//creates a depth generator
+        g_UserGenerator.Create(g_Context);//creates a user generator
+        g_ImageGenerator.Create(g_Context);//creates a IMage generator
+        
 	g_Context.FindExistingNode(XN_NODE_TYPE_DEPTH, g_DepthGenerator);//Returns the first found existing node of the specified type(pointer to context. ,type,handle to node)
 	g_Context.FindExistingNode(XN_NODE_TYPE_USER, g_UserGenerator);//
-        g_UserGenerator.Create(g_Context);//creates a user generator
+        g_Context.FindExistingNode(XN_NODE_TYPE_IMAGE,g_ImageGenerator);
+        
+        
+        if(g_Record){
+        recorder.Create(g_Context);//creates a recorder node
+        recorder.SetDestination(XN_RECORD_MEDIUM_FILE,"recording.tmp.oni");
+        recorder.AddNodeToRecording(g_DepthGenerator);
+       // recorder.AddNodeToRecording(g_ImageGenerator);
+        }
+
 
 	XnCallbackHandle hUserCallbacks, hCalibrationCallbacks, hPoseCallbacks;//XnCallbackHandle-Handle to a registered callback function
 	//register***Callbacks(dectection start, detection end, null, callback handle)
@@ -278,4 +302,5 @@ int main(int argc, char **argv)
 	glutMainLoop();
         
         outpnt.close();
+        
 }
