@@ -1,24 +1,24 @@
 /*****************************************************************************
-*                                                                            *
-*  OpenNI 1.0 Alpha                                                          *
-*  Copyright (C) 2010 PrimeSense Ltd.                                        *
-*                                                                            *
-*  This file is part of OpenNI.                                              *
-*                                                                            *
-*  OpenNI is free software: you can redistribute it and/or modify            *
-*  it under the terms of the GNU Lesser General Public License as published  *
-*  by the Free Software Foundation, either version 3 of the License, or      *
-*  (at your option) any later version.                                       *
-*                                                                            *
-*  OpenNI is distributed in the hope that it will be useful,                 *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of            *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the              *
-*  GNU Lesser General Public License for more details.                       *
-*                                                                            *
-*  You should have received a copy of the GNU Lesser General Public License  *
-*  along with OpenNI. If not, see <http://www.gnu.org/licenses/>.            *
-*                                                                            *
-*****************************************************************************/
+ *                                                                            *
+ *  OpenNI 1.0 Alpha                                                          *
+ *  Copyright (C) 2010 PrimeSense Ltd.                                        *
+ *                                                                            *
+ *  This file is part of OpenNI.                                              *
+ *                                                                            *
+ *  OpenNI is free software: you can redistribute it and/or modify            *
+ *  it under the terms of the GNU Lesser General Public License as published  *
+ *  by the Free Software Foundation, either version 3 of the License, or      *
+ *  (at your option) any later version.                                       *
+ *                                                                            *
+ *  OpenNI is distributed in the hope that it will be useful,                 *
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of            *
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the              *
+ *  GNU Lesser General Public License for more details.                       *
+ *                                                                            *
+ *  You should have received a copy of the GNU Lesser General Public License  *
+ *  along with OpenNI. If not, see <http://www.gnu.org/licenses/>.            *
+ *                                                                            *
+ *****************************************************************************/
 
 
 
@@ -31,7 +31,7 @@
 #include <GL/glut.h>
 #include <iostream>
 #include <fstream>
-void Drawpt(XnUserID player, XnSkeletonJoint eJoint1, XnSkeletonJoint eJoint2,XnSkeletonJoint eJoint3);
+void Drawpt(XnUserID player, XnSkeletonJoint eJoint1, XnSkeletonJoint eJoint2, XnSkeletonJoint eJoint3);
 extern xn::UserGenerator g_UserGenerator;
 extern xn::DepthGenerator g_DepthGenerator;
 
@@ -43,25 +43,40 @@ extern XnBool g_bPrintState;
 extern XnBool g_bRecord;
 extern std::ofstream outpnt;
 
+GLfloat texcoords[8];
+
 
 #define MAX_DEPTH 10000
 float g_pDepthHist[MAX_DEPTH];
+
 unsigned int getClosestPowerOfTwo(unsigned int n)
 {
 	unsigned int m = 2;
-	while(m < n) m<<=1;
+	while (m < n) m <<= 1;
 
 	return m;
 }
+
+/**
+ * initTexture()
+ *
+ *
+ *
+ * @param buf		void**
+ * @param width	int&
+ * @param height	int&
+ * @return
+ */
+
 GLuint initTexture(void** buf, int& width, int& height)
 {
 	GLuint texID = 0;
-	glGenTextures(1,&texID);
+	glGenTextures(1, &texID);
 
 	width = getClosestPowerOfTwo(width);
-	height = getClosestPowerOfTwo(height); 
-	*buf = new unsigned char[width*height*4];
-	glBindTexture(GL_TEXTURE_2D,texID);
+	height = getClosestPowerOfTwo(height);
+	*buf = new unsigned char[width * height * 4];
+	glBindTexture(GL_TEXTURE_2D, texID);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -69,10 +84,22 @@ GLuint initTexture(void** buf, int& width, int& height)
 	return texID;
 }
 
-GLfloat texcoords[8];
+/**
+ * DrawRectangle()
+ *
+ * Given the four corners of the rectangle, it will draw
+ * a rectangle.
+ *
+ * @param topLeftX		float
+ * @param topLeftY		float
+ * @param bottomRightX	float
+ * @param bottomRightY	float
+ */
+
 void DrawRectangle(float topLeftX, float topLeftY, float bottomRightX, float bottomRightY)
 {
-	GLfloat verts[8] = {	topLeftX, topLeftY,
+	GLfloat verts[8] = {
+		topLeftX, topLeftY,
 		topLeftX, bottomRightY,
 		bottomRightX, bottomRightY,
 		bottomRightX, topLeftY
@@ -83,6 +110,18 @@ void DrawRectangle(float topLeftX, float topLeftY, float bottomRightX, float bot
 	//TODO: Maybe glFinish needed here instead - if there's some bad graphics crap
 	glFlush();
 }
+
+/**
+ * DrawTexture()
+ *
+ * Draws a texture utilizing the DrawRectangle() function.
+ *
+ * @param topLeftX		float
+ * @param topLeftY		float
+ * @param bottomRightX	float
+ * @param bottomRightY	float
+ */
+
 void DrawTexture(float topLeftX, float topLeftY, float bottomRightX, float bottomRightY)
 {
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -93,34 +132,55 @@ void DrawTexture(float topLeftX, float topLeftY, float bottomRightX, float botto
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 }
 
-XnFloat Colors[][3] =
-{
-	{0,1,1},
-	{0,0,1},
-	{0,1,0},
-	{1,1,0},
-	{1,0,0},
-	{1,.5,0},
-	{.5,1,0},
-	{0,.5,1},
-	{.5,0,1},
-	{1,1,.5},
-	{1,1,1}
+XnFloat Colors[][3] ={
+	{0, 1, 1},
+	{0, 0, 1},
+	{0, 1, 0},
+	{1, 1, 0},
+	{1, 0, 0},
+	{1, .5, 0},
+	{.5, 1, 0},
+	{0, .5, 1},
+	{.5, 0, 1},
+	{1, 1, .5},
+	{1, 1, 1}
 };
 XnUInt32 nColors = 10;
 
+/**
+ * glPrintString()
+ *
+ * Does what you think.
+ *
+ * @param font		void*
+ * @param str		char*
+ */
+
 void glPrintString(void *font, char *str)
 {
-	int i,l = strlen(str);
+	int i, l = strlen(str);
 
-	for(i=0; i<l; i++)
+	for (i = 0; i < l; i++)
 	{
-		glutBitmapCharacter(font,*str++);
+		glutBitmapCharacter(font, *str++);
 	}
 }
 
+/**
+ * DrawLimb()
+ *
+ * Draws the 3D point of a limb on the screen.
+ *
+ * TODO: Figure out what limb is being drawn.
+ *
+ * @param player	XnUserID			The user's number.
+ * @param eJoint1	XnSkeletonJoint	Starting 3D point.
+ * @param eJoint2	XnSkeletonJoint	Ending 3D point.
+ */
+
 void DrawLimb(XnUserID player, XnSkeletonJoint eJoint1, XnSkeletonJoint eJoint2)
 {
+	// Lets make sure we are tracking this player before we draw anything.
 	if (!g_UserGenerator.GetSkeletonCap().IsTracking(player))
 	{
 		printf("not tracked!\n");
@@ -131,8 +191,10 @@ void DrawLimb(XnUserID player, XnSkeletonJoint eJoint1, XnSkeletonJoint eJoint2)
 	g_UserGenerator.GetSkeletonCap().GetSkeletonJointPosition(player, eJoint1, joint1);
 	g_UserGenerator.GetSkeletonCap().GetSkeletonJointPosition(player, eJoint2, joint2);
 
+	// Q: Does this do some sort of probability on the joint?
 	if (joint1.fConfidence < 0.5 || joint2.fConfidence < 0.5)
 	{
+		printf("Joints: 1) %f\t2) %f\n", joint1.fConfidence, joint2.fConfidence);
 		return;
 	}
 
@@ -140,86 +202,97 @@ void DrawLimb(XnUserID player, XnSkeletonJoint eJoint1, XnSkeletonJoint eJoint2)
 	pt[0] = joint1.position;
 	pt[1] = joint2.position;
 
+	//printf("Joint 1: %.2f %.2f %.2f\n", pt[0].X, pt[0].Y, pt[0].Z);
+
 	g_DepthGenerator.ConvertRealWorldToProjective(2, pt, pt);
 	glVertex3i(pt[0].X, pt[0].Y, 0);
 	glVertex3i(pt[1].X, pt[1].Y, 0);
-       
 }
 
-void Drawpt(XnUserID player, XnSkeletonJoint eJoint1, XnSkeletonJoint eJoint2,XnSkeletonJoint eJoint3)
+/**
+ * Drawpt()
+ *
+ *
+ *
+ * @param player	XnUserID			The user's number.
+ * @param eJoint1	XnSkeletonJoint
+ * @param eJoint2	XnSkeletonJoint
+ * @param eJoint3	XnSkeletonJoint
+ */
+void Drawpt(XnUserID player, XnSkeletonJoint eJoint1, XnSkeletonJoint eJoint2, XnSkeletonJoint eJoint3)
 {
-glEnd();
-XnSkeletonJointPosition joint1, joint2,joint3;
-        g_UserGenerator.GetSkeletonCap().GetSkeletonJointPosition(player, eJoint1, joint1);
+	glEnd();
+	XnSkeletonJointPosition joint1, joint2, joint3;
+	g_UserGenerator.GetSkeletonCap().GetSkeletonJointPosition(player, eJoint1, joint1);
 	g_UserGenerator.GetSkeletonCap().GetSkeletonJointPosition(player, eJoint2, joint2);
-g_UserGenerator.GetSkeletonCap().GetSkeletonJointPosition(player, eJoint3, joint3);
-        XnPoint3D pt[3];
+	g_UserGenerator.GetSkeletonCap().GetSkeletonJointPosition(player, eJoint3, joint3);
+	XnPoint3D pt[3];
 	pt[0] = joint1.position;
 	pt[1] = joint2.position;
-        pt[2] = joint3.position;
-        g_DepthGenerator.ConvertRealWorldToProjective(3, pt, pt);
+	pt[2] = joint3.position;
+	g_DepthGenerator.ConvertRealWorldToProjective(3, pt, pt);
 
-    char strPtLabel[50] = "";
-     xnOSMemSet(strPtLabel, 0, sizeof(strPtLabel));
-     
-     for(int i=0;i<3;i++){
-     sprintf(strPtLabel, "X:%.2f Y:%.2f Z:%.2f\n", pt[i].X, pt[i].Y, pt[i].Z);
-    // printf( "X:%.2f Y:%.2f Z:%.2f\t", pt[i].X, pt[i].Y, pt[i].Z);
-    glRasterPos2i(pt[i].X, pt[i].Y);
-    glPrintString(GLUT_BITMAP_HELVETICA_18, strPtLabel);
-     }
-     printf("\n");
+	char strPtLabel[50] = "";
+	xnOSMemSet(strPtLabel, 0, sizeof (strPtLabel));
 
-     if(g_bRecord){
-        //print to file
-        for(int i=0;i<3;i++){
-  
-        outpnt<<pt[i].X <<" "<< pt[i].Y<<" "<<  pt[i].Z <<"\t\t";
-          }
-        outpnt<<"\n";
-     }
+	for (int i = 0; i < 3; i++)
+	{
+		//sprintf(strPtLabel, "X:%.2f Y:%.2f Z:%.2f\n", pt[i].X, pt[i].Y, pt[i].Z);
+		sprintf(strPtLabel, "X\n");
+		// printf( "X:%.2f Y:%.2f Z:%.2f\t", pt[i].X, pt[i].Y, pt[i].Z);
+		glRasterPos2i(pt[i].X, pt[i].Y);
+		glPrintString(GLUT_BITMAP_HELVETICA_18, strPtLabel);
+	}
+	//printf("\n");
+
+	if (g_bRecord)
+	{
+		//print to file
+		for (int i = 0; i < 3; i++)
+		{
+			outpnt << pt[i].X << " " << pt[i].Y << " " << pt[i].Z << "\t\t";
+		}
+		outpnt << "\n";
+	}
 
 
-glBegin(GL_LINES);
+	glBegin(GL_LINES);
 
 }
 
 void DrawDepthMap(const xn::DepthMetaData& dmd, const xn::SceneMetaData& smd)
 {
-                        
-
-        static bool bInitialized = false;
+	static bool bInitialized = false;
 	static GLuint depthTexID;
 	static unsigned char* pDepthTexBuf;
 	static int texWidth, texHeight;
 
-	 float topLeftX;
-	 float topLeftY;
-	 float bottomRightY;
-	 float bottomRightX;
+	float topLeftX;
+	float topLeftY;
+	float bottomRightY;
+	float bottomRightX;
 	float texXpos;
 	float texYpos;
 
-	if(!bInitialized)
+	if (!bInitialized)
 	{
-
-		texWidth =  getClosestPowerOfTwo(dmd.XRes());
+		texWidth = getClosestPowerOfTwo(dmd.XRes());
 		texHeight = getClosestPowerOfTwo(dmd.YRes());
 
-//		printf("Initializing depth texture: width = %d, height = %d\n", texWidth, texHeight);
-		depthTexID = initTexture((void**)&pDepthTexBuf,texWidth, texHeight) ;
+		//		printf("Initializing depth texture: width = %d, height = %d\n", texWidth, texHeight);
+		depthTexID = initTexture((void**) &pDepthTexBuf, texWidth, texHeight);
 
-//		printf("Initialized depth texture: width = %d, height = %d\n", texWidth, texHeight);
+		//		printf("Initialized depth texture: width = %d, height = %d\n", texWidth, texHeight);
 		bInitialized = true;
 
 		topLeftX = dmd.XRes();
 		topLeftY = 0;
 		bottomRightY = dmd.YRes();
 		bottomRightX = 0;
-		texXpos =(float)dmd.XRes()/texWidth;
-		texYpos  =(float)dmd.YRes()/texHeight;
+		texXpos = (float) dmd.XRes() / texWidth;
+		texYpos = (float) dmd.YRes() / texHeight;
 
-		memset(texcoords, 0, 8*sizeof(float));
+		memset(texcoords, 0, 8 * sizeof (float));
 		texcoords[0] = texXpos, texcoords[1] = texYpos, texcoords[2] = texXpos, texcoords[7] = texYpos;
 
 	}
@@ -238,10 +311,10 @@ void DrawDepthMap(const xn::DepthMetaData& dmd, const xn::SceneMetaData& smd)
 	const XnLabel* pLabels = smd.Data();
 
 	// Calculate the accumulative histogram
-	memset(g_pDepthHist, 0, MAX_DEPTH*sizeof(float));
-	for (nY=0; nY<g_nYRes; nY++)
+	memset(g_pDepthHist, 0, MAX_DEPTH * sizeof (float));
+	for (nY = 0; nY < g_nYRes; nY++)
 	{
-		for (nX=0; nX<g_nXRes; nX++)
+		for (nX = 0; nX < g_nXRes; nX++)
 		{
 			nValue = *pDepth;
 
@@ -255,15 +328,15 @@ void DrawDepthMap(const xn::DepthMetaData& dmd, const xn::SceneMetaData& smd)
 		}
 	}
 
-	for (nIndex=1; nIndex<MAX_DEPTH; nIndex++)
+	for (nIndex = 1; nIndex < MAX_DEPTH; nIndex++)
 	{
-		g_pDepthHist[nIndex] += g_pDepthHist[nIndex-1];
+		g_pDepthHist[nIndex] += g_pDepthHist[nIndex - 1];
 	}
 	if (nNumberOfPoints)
 	{
-		for (nIndex=1; nIndex<MAX_DEPTH; nIndex++)
+		for (nIndex = 1; nIndex < MAX_DEPTH; nIndex++)
 		{
-			g_pDepthHist[nIndex] = (unsigned int)(256 * (1.0f - (g_pDepthHist[nIndex] / nNumberOfPoints)));
+			g_pDepthHist[nIndex] = (unsigned int) (256 * (1.0f - (g_pDepthHist[nIndex] / nNumberOfPoints)));
 		}
 	}
 
@@ -272,11 +345,10 @@ void DrawDepthMap(const xn::DepthMetaData& dmd, const xn::SceneMetaData& smd)
 	{
 		XnUInt32 nIndex = 0;
 		// Prepare the texture map
-		for (nY=0; nY<g_nYRes; nY++)
+		for (nY = 0; nY < g_nYRes; nY++)
 		{
-			for (nX=0; nX < g_nXRes; nX++, nIndex++)
+			for (nX = 0; nX < g_nXRes; nX++, nIndex++)
 			{
-
 				pDestImage[0] = 0;
 				pDestImage[1] = 0;
 				pDestImage[2] = 0;
@@ -294,7 +366,7 @@ void DrawDepthMap(const xn::DepthMetaData& dmd, const xn::SceneMetaData& smd)
 					{
 						nHistValue = g_pDepthHist[nValue];
 
-						pDestImage[0] = nHistValue * Colors[nColorID][0]; 
+						pDestImage[0] = nHistValue * Colors[nColorID][0];
 						pDestImage[1] = nHistValue * Colors[nColorID][1];
 						pDestImage[2] = nHistValue * Colors[nColorID][2];
 					}
@@ -302,25 +374,24 @@ void DrawDepthMap(const xn::DepthMetaData& dmd, const xn::SceneMetaData& smd)
 
 				pDepth++;
 				pLabels++;
-				pDestImage+=3;
+				pDestImage += 3;
 			}
 
 			pDestImage += (texWidth - g_nXRes) *3;
 		}
-	}
-	else
+	} else
 	{
-		xnOSMemSet(pDepthTexBuf, 0, 3*2*g_nXRes*g_nYRes);
+		xnOSMemSet(pDepthTexBuf, 0, 3 * 2 * g_nXRes * g_nYRes);
 	}
 
 	glBindTexture(GL_TEXTURE_2D, depthTexID);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texWidth, texHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, pDepthTexBuf);
 
 	// Display the OpenGL texture map
-	glColor4f(0.75,0.75,0.75,1);
+	glColor4f(0.75, 0.75, 0.75, 1);
 
 	glEnable(GL_TEXTURE_2D);
-	DrawTexture(dmd.XRes(),dmd.YRes(),0,0);	
+	DrawTexture(dmd.XRes(), dmd.YRes(), 0, 0);
 	glDisable(GL_TEXTURE_2D);
 
 	char strLabel[50] = "";
@@ -335,30 +406,27 @@ void DrawDepthMap(const xn::DepthMetaData& dmd, const xn::SceneMetaData& smd)
 			g_UserGenerator.GetCoM(aUsers[i], com);
 			g_DepthGenerator.ConvertRealWorldToProjective(1, &com, &com);
 
-			xnOSMemSet(strLabel, 0, sizeof(strLabel));
+			xnOSMemSet(strLabel, 0, sizeof (strLabel));
 			if (!g_bPrintState)
 			{
 				// Tracking
 				sprintf(strLabel, "%d", aUsers[i]);
-			}
-			else if (g_UserGenerator.GetSkeletonCap().IsTracking(aUsers[i]))
+			} else if (g_UserGenerator.GetSkeletonCap().IsTracking(aUsers[i]))
 			{
 				// Tracking
 				sprintf(strLabel, "%d - Tracking", aUsers[i]);
-			}
-			else if (g_UserGenerator.GetSkeletonCap().IsCalibrating(aUsers[i]))
+			} else if (g_UserGenerator.GetSkeletonCap().IsCalibrating(aUsers[i]))
 			{
 				// Calibrating
 				sprintf(strLabel, "%d - Calibrating...", aUsers[i]);
-			}
-			else
+			} else
 			{
 				// Nothing
 				sprintf(strLabel, "%d - Looking for pose", aUsers[i]);
 			}
 
 
-			glColor4f(1-Colors[i%nColors][0], 1-Colors[i%nColors][1], 1-Colors[i%nColors][2], 1);
+			glColor4f(1 - Colors[i % nColors][0], 1 - Colors[i % nColors][1], 1 - Colors[i % nColors][2], 1);
 
 			glRasterPos2i(com.X, com.Y);
 			glPrintString(GLUT_BITMAP_HELVETICA_18, strLabel);
@@ -368,36 +436,39 @@ void DrawDepthMap(const xn::DepthMetaData& dmd, const xn::SceneMetaData& smd)
 		{
 
 			glBegin(GL_LINES);
-			glColor4f(1-Colors[aUsers[i]%nColors][0], 1-Colors[aUsers[i]%nColors][1], 1-Colors[aUsers[i]%nColors][2], 1);
+			glColor4f(1 - Colors[aUsers[i] % nColors][0], 1 - Colors[aUsers[i] % nColors][1], 1 - Colors[aUsers[i] % nColors][2], 1);
 
-                        //DrawLimb(aUsers[i], XN_SKEL_HEAD, XN_SKEL_NECK);
+			// The user's head and neck
+			DrawLimb(aUsers[i], XN_SKEL_HEAD, XN_SKEL_NECK);
 
-			//DrawLimb(aUsers[i], XN_SKEL_NECK, XN_SKEL_LEFT_SHOULDER);
+			DrawLimb(aUsers[i], XN_SKEL_NECK, XN_SKEL_LEFT_SHOULDER);
 			DrawLimb(aUsers[i], XN_SKEL_LEFT_SHOULDER, XN_SKEL_LEFT_ELBOW);
 			DrawLimb(aUsers[i], XN_SKEL_LEFT_ELBOW, XN_SKEL_LEFT_HAND);
 
-                        //DrawLimb(aUsers[i], XN_SKEL_NECK, XN_SKEL_RIGHT_SHOULDER);
-			//DrawLimb(aUsers[i], XN_SKEL_RIGHT_SHOULDER, XN_SKEL_RIGHT_ELBOW);
-			//DrawLimb(aUsers[i], XN_SKEL_RIGHT_ELBOW, XN_SKEL_RIGHT_HAND);
+			DrawLimb(aUsers[i], XN_SKEL_NECK, XN_SKEL_RIGHT_SHOULDER);
+			DrawLimb(aUsers[i], XN_SKEL_RIGHT_SHOULDER, XN_SKEL_RIGHT_ELBOW);
+			DrawLimb(aUsers[i], XN_SKEL_RIGHT_ELBOW, XN_SKEL_RIGHT_HAND);
 
-			//DrawLimb(aUsers[i], XN_SKEL_LEFT_SHOULDER, XN_SKEL_TORSO);
-			//DrawLimb(aUsers[i], XN_SKEL_RIGHT_SHOULDER, XN_SKEL_TORSO);
+			//
+			DrawLimb(aUsers[i], XN_SKEL_LEFT_SHOULDER, XN_SKEL_TORSO);
+			DrawLimb(aUsers[i], XN_SKEL_RIGHT_SHOULDER, XN_SKEL_TORSO);
 
-			//DrawLimb(aUsers[i], XN_SKEL_TORSO, XN_SKEL_LEFT_HIP);
-			//DrawLimb(aUsers[i], XN_SKEL_LEFT_HIP, XN_SKEL_LEFT_KNEE);
-			//DrawLimb(aUsers[i], XN_SKEL_LEFT_KNEE, XN_SKEL_LEFT_FOOT);
+			// The user's lower right
+			DrawLimb(aUsers[i], XN_SKEL_TORSO, XN_SKEL_LEFT_HIP);
+			DrawLimb(aUsers[i], XN_SKEL_LEFT_HIP, XN_SKEL_LEFT_KNEE);
+			DrawLimb(aUsers[i], XN_SKEL_LEFT_KNEE, XN_SKEL_LEFT_FOOT);
 
-			//DrawLimb(aUsers[i], XN_SKEL_TORSO, XN_SKEL_RIGHT_HIP);
-			//DrawLimb(aUsers[i], XN_SKEL_RIGHT_HIP, XN_SKEL_RIGHT_KNEE);
-			//DrawLimb(aUsers[i], XN_SKEL_RIGHT_KNEE, XN_SKEL_RIGHT_FOOT);
+			// The user's lower left
+			DrawLimb(aUsers[i], XN_SKEL_TORSO, XN_SKEL_RIGHT_HIP);
+			DrawLimb(aUsers[i], XN_SKEL_RIGHT_HIP, XN_SKEL_RIGHT_KNEE);
+			DrawLimb(aUsers[i], XN_SKEL_RIGHT_KNEE, XN_SKEL_RIGHT_FOOT);
 
-			//DrawLimb(aUsers[i], XN_SKEL_LEFT_HIP, XN_SKEL_RIGHT_HIP);
-                         Drawpt(aUsers[i],XN_SKEL_LEFT_SHOULDER,XN_SKEL_LEFT_ELBOW,XN_SKEL_LEFT_HAND );
-
+			// The user's waist
+			DrawLimb(aUsers[i], XN_SKEL_LEFT_HIP, XN_SKEL_RIGHT_HIP);
+			Drawpt(aUsers[i], XN_SKEL_LEFT_SHOULDER, XN_SKEL_LEFT_ELBOW, XN_SKEL_LEFT_HAND);
+			Drawpt(aUsers[i], XN_SKEL_RIGHT_SHOULDER, XN_SKEL_RIGHT_ELBOW, XN_SKEL_RIGHT_HAND);
 			glEnd();
-
-
 		}
 	}
-        
+
 }

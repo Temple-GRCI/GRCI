@@ -44,12 +44,26 @@
 #include <fstream>
 #include<stdio.h>
 #include<iostream>
+#include <GL/glut.h>
+
+#define GL_WIN_SIZE_X 720
+#define GL_WIN_SIZE_Y 480
+
+#define SAMPLE_XML_PATH "KinConfig.xml"
+
+#define CHECK_RC(nRetVal, what)										\
+	if (nRetVal != XN_STATUS_OK)									\
+	{																\
+		printf("%s failed: %s\n", what, xnGetStatusString(nRetVal));\
+		return nRetVal;												\
+	}
 //---------------------------------------------------------------------------
 // Globals
 //---------------------------------------------------------------------------
 xn::Context g_Context;// represents an OpenNi Context Object
 xn::DepthGenerator g_DepthGenerator;
 xn::UserGenerator g_UserGenerator;
+xn::HandsGenerator g_HandsGenerator;
 xn::ImageGenerator g_ImageGenerator;
 xn::Recorder recorder;
 std::ofstream outpnt;
@@ -64,11 +78,6 @@ XnBool g_bPrintState = TRUE;
 XnBool g_runfile = TRUE; // Use mock node(T) or kinect(F)
 XnBool g_Record = FALSE; // Record a new .oni file(T)
 
-
-#include <GL/glut.h>
-
-#define GL_WIN_SIZE_X 720
-#define GL_WIN_SIZE_Y 480
 
 XnBool g_bPause = false;
 XnBool g_bRecord = false;
@@ -92,7 +101,7 @@ void CleanupExit()
  * Detects the presense of a new user.
  *
  * @param generator
- * @param nId			XnUserID	Identification for the user.
+ * @param nId			XnUserID	The user's number.
  * @param pCookie
  */
 
@@ -126,7 +135,7 @@ void XN_CALLBACK_TYPE User_NewUser(xn::UserGenerator& generator, XnUserID nId, v
  * Code to execute when a user is lost.
  *
  * @param generator
- * @param nId			XnUserID	Identification for the user.
+ * @param nId			XnUserID	The user's number.
  * @param pCookie
  */
 
@@ -142,13 +151,14 @@ void XN_CALLBACK_TYPE User_LostUser(xn::UserGenerator& generator, XnUserID nId, 
  *
  * @param capability
  * @param strPose		XnChar*	Name of the detected pose.
- * @param nId			XnUserID	User who performed the detected pose.
+ * @param nId			XnUserID	User who posed.
  * @param pCookie
  */
 
 void XN_CALLBACK_TYPE UserPose_PoseDetected(xn::PoseDetectionCapability& capability, 
 								    const XnChar* strPose,
-								    XnUserID nId, void* pCookie)
+								    XnUserID nId,
+								    void* pCookie)
 {
 	printf("Pose %s detected for user %d\n", strPose, nId);
 	g_UserGenerator.GetPoseDetectionCap().StopPoseDetection(nId);
@@ -162,7 +172,7 @@ void XN_CALLBACK_TYPE UserPose_PoseDetected(xn::PoseDetectionCapability& capabil
  * TODO: Get this to be automatic when a user enters.
  *
  * @param capability
- * @param nId			XnUserID	User Identification.
+ * @param nId			XnUserID	The user's number.
  * @param pCookie
  */
 
@@ -180,7 +190,7 @@ void XN_CALLBACK_TYPE UserCalibration_CalibrationStart(xn::SkeletonCapability& c
  * otherwise it starts looking for poses again.
  *
  * @param capability
- * @param nId			XnUserID	User Identification.
+ * @param nId			XnUserID	The user's number.
  * @param bSuccess		XnBool	True if calibration succeeded.
  * @param pCookie
  */
@@ -347,17 +357,10 @@ void glInit (int * pargc, char ** argv)
 	glDisableClientState(GL_COLOR_ARRAY);
 }
 
-#define SAMPLE_XML_PATH "KinConfig.xml"
-
-#define CHECK_RC(nRetVal, what)										\
-	if (nRetVal != XN_STATUS_OK)									\
-	{																\
-		printf("%s failed: %s\n", what, xnGetStatusString(nRetVal));\
-		return nRetVal;												\
-	}
-
 int main(int argc, char **argv)
 {
+	XnStatus rc = XN_STATUS_OK;
+	
 	// Handles to a registered callback function
 	XnCallbackHandle hUserCallbacks, hCalibrationCallbacks, hPoseCallbacks;
 
@@ -373,18 +376,21 @@ int main(int argc, char **argv)
 		// Uses an xml file to set config of nodes
 		//g_Context.InitFromXmlFile("KinConfig.xml");
 		// Playing sample recording. Replace file name to any file to play.
-		//g_Context.OpenFileRecording("SkeletonRec.oni");
-		g_Context.OpenFileRecording("PRrec4w.oni");
+		g_Context.OpenFileRecording("SkeletonRec.oni");
+		//g_Context.OpenFileRecording("PRrec4w.oni");
 	}
 
 	g_DepthGenerator.Create(g_Context);	// creates a depth generator
 	g_UserGenerator.Create(g_Context);		// creates a user generator
 	g_ImageGenerator.Create(g_Context);	// creates a image generator
+	g_HandsGenerator.Create(g_Context);
 
 	// Returns the first found existing node of the specified type(pointer to context. ,type,handle to node)
 	g_Context.FindExistingNode(XN_NODE_TYPE_DEPTH, g_DepthGenerator);
 	g_Context.FindExistingNode(XN_NODE_TYPE_USER, g_UserGenerator);
 	g_Context.FindExistingNode(XN_NODE_TYPE_IMAGE,g_ImageGenerator);
+	rc = g_Context.FindExistingNode(XN_NODE_TYPE_HANDS, g_HandsGenerator);
+	CHECK_RC(rc, "Find hands generator");
         
 	if(g_Record){
 		recorder.Create(g_Context);	// creates a recorder node
@@ -398,13 +404,18 @@ int main(int argc, char **argv)
 	 *
 	 * For your information.
 	 *
-      * @param detection start	XnCallbackHandle
+	 * @param detection start	XnCallbackHandle
       * @param detection end		XnCallbackHandle
 	 * @param null				What the hell is a pCookie?
 	 * @param callback handle	XnCallbackHandle
       */
-	g_UserGenerator.RegisterUserCallbacks(User_NewUser, User_LostUser, NULL, hUserCallbacks);//registers to user callbacks which are defined above
-	g_UserGenerator.GetSkeletonCap().RegisterCalibrationCallbacks(UserCalibration_CalibrationStart, UserCalibration_CalibrationEnd, NULL, hCalibrationCallbacks);
+	g_UserGenerator.RegisterUserCallbacks(User_NewUser, User_LostUser, NULL, hUserCallbacks);
+	g_UserGenerator.GetSkeletonCap().RegisterCalibrationCallbacks(
+			UserCalibration_CalibrationStart,
+			UserCalibration_CalibrationEnd,
+			NULL,
+			hCalibrationCallbacks
+	);
 
 	if (g_UserGenerator.GetSkeletonCap().NeedPoseForCalibration())
 	{
@@ -414,7 +425,12 @@ int main(int argc, char **argv)
 			printf("Pose required, but not supported\n");
 			return 1;
 		}
-		g_UserGenerator.GetPoseDetectionCap().RegisterToPoseCallbacks(UserPose_PoseDetected, NULL, NULL, hPoseCallbacks);
+		g_UserGenerator.GetPoseDetectionCap().RegisterToPoseCallbacks(
+				UserPose_PoseDetected,
+				NULL,
+				NULL,
+				hPoseCallbacks
+		);
 		g_UserGenerator.GetSkeletonCap().GetCalibrationPose(g_strPose);
 	}
 
