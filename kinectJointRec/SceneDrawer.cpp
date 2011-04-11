@@ -31,6 +31,7 @@
 #include <GL/glut.h>
 #include <iostream>
 #include <fstream>
+
 void Drawpt(XnUserID player, XnSkeletonJoint eJoint1, XnSkeletonJoint eJoint2, XnSkeletonJoint eJoint3);
 extern xn::UserGenerator g_UserGenerator;
 extern xn::DepthGenerator g_DepthGenerator;
@@ -194,7 +195,6 @@ void DrawLimb(XnUserID player, XnSkeletonJoint eJoint1, XnSkeletonJoint eJoint2)
 	// Q: Does this do some sort of probability on the joint?
 	if (joint1.fConfidence < 0.5 || joint2.fConfidence < 0.5)
 	{
-		printf("Joints: 1) %f\t2) %f\n", joint1.fConfidence, joint2.fConfidence);
 		return;
 	}
 
@@ -207,6 +207,54 @@ void DrawLimb(XnUserID player, XnSkeletonJoint eJoint1, XnSkeletonJoint eJoint2)
 	g_DepthGenerator.ConvertRealWorldToProjective(2, pt, pt);
 	glVertex3i(pt[0].X, pt[0].Y, 0);
 	glVertex3i(pt[1].X, pt[1].Y, 0);
+}
+
+/**
+ * WhichJoint()
+ * 
+ * The shittiest function ever... but it had to be done.
+ * 
+ * @param eJoint
+ */
+
+char* WhichJoint(XnSkeletonJoint eJoint)
+{
+	char* name = "";
+	switch(eJoint)
+	{
+		case 1: name = "Head";break;
+		case 2: name = "Neck";break;
+		case 3: name = "Torso";break;
+		case 4: name = "Waist";break;
+
+		case 5: name = "Collar (R)";break;
+		case 6: name = "Shoulder (R)";break;
+		case 7: name = "Elbow (R)";break;
+		case 8: name = "Wrist (R)";break;
+		case 9: name = "Hand (R)";break;
+		case 10: name = "Finger Tip (R)";break;
+
+		case 11: name = "Collar (L)";break;
+		case 12: name = "Shoulder (L)";break;
+		case 13: name = "Elbow (L)";break;
+		case 14: name = "Wrist (L)";break;
+		case 15: name = "Hand (L)";break;
+		case 16: name = "Finger Tip (L)";break;
+
+		case 17: name = "Hip (R)";break;
+		case 18: name = "Knee (R)";break;
+		case 19: name = "Ankle (R)";break;
+		case 20: name = "Foot (R)";break;
+
+		case 21: name = "Hip (L)";break;
+		case 22: name = "Knee (L)";break;
+		case 23: name = "Ankle (L)";break;
+		case 24: name = "Foot (L)";break;
+
+		default: name = "Alien Limb";
+	}
+
+	return name;
 }
 
 /**
@@ -226,6 +274,15 @@ void Drawpt(XnUserID player, XnSkeletonJoint eJoint1, XnSkeletonJoint eJoint2, X
 	g_UserGenerator.GetSkeletonCap().GetSkeletonJointPosition(player, eJoint1, joint1);
 	g_UserGenerator.GetSkeletonCap().GetSkeletonJointPosition(player, eJoint2, joint2);
 	g_UserGenerator.GetSkeletonCap().GetSkeletonJointPosition(player, eJoint3, joint3);
+
+
+	// Added these to an array so we can cycle through them
+	// in the printing loop
+	XnSkeletonJoint joint[3];
+	joint[0] = eJoint1;
+	joint[1] = eJoint2;
+	joint[2] = eJoint3;
+
 	XnPoint3D pt[3];
 	pt[0] = joint1.position;
 	pt[1] = joint2.position;
@@ -238,7 +295,7 @@ void Drawpt(XnUserID player, XnSkeletonJoint eJoint1, XnSkeletonJoint eJoint2, X
 	for (int i = 0; i < 3; i++)
 	{
 		//sprintf(strPtLabel, "X:%.2f Y:%.2f Z:%.2f\n", pt[i].X, pt[i].Y, pt[i].Z);
-		sprintf(strPtLabel, "X\n");
+		sprintf(strPtLabel, "X  %s\n", WhichJoint(joint[i]));
 		// printf( "X:%.2f Y:%.2f Z:%.2f\t", pt[i].X, pt[i].Y, pt[i].Z);
 		glRasterPos2i(pt[i].X, pt[i].Y);
 		glPrintString(GLUT_BITMAP_HELVETICA_18, strPtLabel);

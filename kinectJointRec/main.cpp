@@ -417,6 +417,8 @@ int main(int argc, char **argv)
 			hCalibrationCallbacks
 	);
 
+	
+
 	if (g_UserGenerator.GetSkeletonCap().NeedPoseForCalibration())
 	{
 		g_bNeedPose = TRUE;
