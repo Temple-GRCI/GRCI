@@ -28,6 +28,7 @@
 #include <XnVBroadcaster.h>
 #include <XnVPushDetector.h>
 
+#include <iostream>
 
         #include <GL/glut.h>
 
@@ -51,65 +52,18 @@ GLubyte indices_box[] = {0,1,2,3,   // 24 of indices
 int rows=10;
 int columns=10;
 float yLocation = 0.0f; // Keep track of our position on the y axis.
+float xLocation = 0.0f; // Keep track of our position on the x axis.
+float zLocation = 0.0f; // Keep track of our position on the z axis.
+float xRotationAngle = 0.0f; // The angle of rotation for our object
 float yRotationAngle = 0.0f; // The angle of rotation for our object
 
 
 
-
-
-// Drawing functions
-void DrawLine(XnFloat fMinX, XnFloat fMinY, XnFloat fMinZ,
-			  XnFloat fMaxX, XnFloat fMaxY, XnFloat fMaxZ,
-			  int width, double r = 1, double g = 1, double b = 1)
-{
-	
-
-	glLineWidth(width);
-	glBegin(GL_LINES);
-	glColor3f(r, g, b);
-	glVertex3f(fMinX, fMinY, fMinZ);
-	glVertex3f(fMaxX, fMaxY, fMaxZ);
-	glEnd();
-
-
-	
-
-}
-
-void DrawFrame(const XnPoint3D& ptMins, const XnPoint3D& ptMaxs, int width, double r, double g, double b)
-{
-	XnPoint3D ptTopLeft = ptMins;
-	XnPoint3D ptBottomRight = ptMaxs;
-
-	// Top line
-	DrawLine(ptTopLeft.X, ptTopLeft.Y, 0,
-		ptBottomRight.X, ptTopLeft.Y, 0,
-		width, r, g, b);
-	// Right Line
-	DrawLine(ptBottomRight.X, ptTopLeft.Y, 0,
-		ptBottomRight.X, ptBottomRight.Y,0,
-		width, r, g, b);
-	// Bottom Line
-	DrawLine(ptBottomRight.X, ptBottomRight.Y,0,
-		ptTopLeft.X, ptBottomRight.Y,0,
-		width, r, g, b);
-	// Left Line
-	DrawLine(ptTopLeft.X, ptBottomRight.Y,0,
-		ptTopLeft.X, ptTopLeft.Y,0,
-		width, r, g, b);
-
-}
-
-// Define the MyBox object
-#include "MyBox.h"
-
-
 XnVSessionManager* g_pSessionManager = NULL;
 XnVFlowRouter* g_pMainFlowRouter;
-
+XnVPushDetector* g_pMainPush;
 XnVSelectableSlider1D* g_pMainSlider;
-
-MyBox* g_pBox[3];
+XnVSwipeDetector* g_pSwipeDetector;
 
 XnBool g_bActive = false;
 XnBool g_bIsInput = false;
@@ -119,8 +73,7 @@ XnFloat g_fValue = 0.5f;
 // Main slider
 void XN_CALLBACK_TYPE MainSlider_OnHover(XnInt32 nItem, void* cxt)
 {
-	for (int i = 0; i < 3; i++)
-		g_pBox[i]->SetFrameMode(i==nItem?MyBox::FrameOver:MyBox::FrameNone);
+	
 }
 
 void XN_CALLBACK_TYPE MainSlider_OnSelect(XnInt32 nItem, XnVDirection dir, void* cxt)
@@ -128,14 +81,19 @@ void XN_CALLBACK_TYPE MainSlider_OnSelect(XnInt32 nItem, XnVDirection dir, void*
 	if (nItem == -1)
 	{
 	}
-	else if (dir == DIRECTION_UP || dir == DIRECTION_FORWARD)
-	{
-		g_pMainFlowRouter->SetActive(g_pBox[nItem]);
-	}
+     
         else if (dir == DIRECTION_BACKWARD)
 	{
-		printf("Slider: Back!!!!!!!!!!!\n");
+            zLocation+=5.0;
+            printf("Slider: Backward\n");
 	}
+        else if (dir == DIRECTION_FORWARD)
+	{
+            
+            printf("Slider: Forward\n");
+	}
+
+        
 	else
 	{
 		printf("Slider: Bad direction for selection: %s\n", XnVDirectionAsString(dir));
@@ -148,14 +106,9 @@ void XN_CALLBACK_TYPE MainSlider_OnValueChange(XnFloat fValue, void* cxt)
 	g_bIsInput = true;
 	g_fValue = fValue;
         yRotationAngle=fValue*360;
-
-         printf("Slider pos :%f\n",fValue);
-
+         //printf("Slider pos :%f\n",fValue);
 }
-void XN_CALLBACK_TYPE MainSlider_ScrollCB(XnFloat fScrollValue, void* pUserCxt){
-   
-  
-}
+
 void XN_CALLBACK_TYPE MainSlider_OnActivate(void* cxt)
 {
 	g_bActive = true;
@@ -175,46 +128,52 @@ void XN_CALLBACK_TYPE MainSlider_OnPrimaryDestroy(XnUInt32 nID, void* cxt)
 	g_bIsInput = false;
 }
 
+// Swipe detector
+	static void XN_CALLBACK_TYPE Swipe_SwipeUp(XnFloat fVelocity, XnFloat fAngle, void* cxt)
+	{
+		printf("Swipe Up!\n");
+
+
+                yLocation = 0.0f; // Keep track of our position on the y axis.
+                xLocation = 0.0f; // Keep track of our position on the x axis.
+zLocation = 0.0f; // Keep track of our position on the z axis.
+xRotationAngle = 0.0f; // The angle of rotation for our object
+yRotationAngle = 0.0f;
+
+
+		
+	}
+
+	static void XN_CALLBACK_TYPE Swipe_SwipeDown(XnFloat fVelocity, XnFloat fAngle, void* cxt)
+	{
+		printf("Swipe Down!\n");
+	
+	}
+
+	static void XN_CALLBACK_TYPE Swipe_SwipeLeft(XnFloat fVelocity, XnFloat fAngle, void* cxt)
+	{
+	yRotationAngle-=90.0;
+            printf("Swipe Left!\n");
+		
+	}
+
+	static void XN_CALLBACK_TYPE Swipe_SwipeRight(XnFloat fVelocity, XnFloat fAngle, void* cxt)
+	{
+	yRotationAngle+=90.0;
+            printf("Swipe Right!\n");
+		
+	}
+
+        //push detector callbacks
+        static void XN_CALLBACK_TYPE Push_Pushed(XnFloat fVelocity, XnFloat fAngle, void* cxt)
+	{
+		printf("Push! velocity %f angle %f\n",fVelocity,fAngle);
+zLocation-=5.0;
+
+	}
+
 #define GL_WIN_SIZE_X 720
 #define GL_WIN_SIZE_Y 480
-
-// More drawing
-void DrawSlider()
-{
-	if (!g_bInSession)
-		return;
-
-	XnPoint3D ptMin = xnCreatePoint3D(50, GL_WIN_SIZE_Y-380, 0);
-	XnPoint3D ptMax = xnCreatePoint3D(650, GL_WIN_SIZE_Y-460, 0);
-
-	XnDouble r, g, b;
-	XnBool bDrawCursor = false;
-
-	if (!g_bActive)
-	{
-		r = g = b = 1;
-	}
-	else if (!g_bIsInput)
-	{
-		r = g = b = 0.5;
-	}
-	else
-	{
-		r = b = 0;
-		g = 1;
-		bDrawCursor = true;
-	}
-
-	DrawFrame(ptMin, ptMax, 20, r, g, b);
-
-	if (bDrawCursor)
-	{
-		DrawLine(600*g_fValue+50, GL_WIN_SIZE_Y-380, 0,
-				600*g_fValue+50, GL_WIN_SIZE_Y-460, 0,
-				30, 1, 1, 0);
-	}
-
-}
 
 xn::Context g_Context;
 xn::DepthGenerator g_DepthGenerator;
@@ -230,9 +189,7 @@ void CleanupExit()
 
 	delete g_pMainFlowRouter;
 	delete g_pMainSlider;
-	delete g_pBox[0];
-	delete g_pBox[1];
-	delete g_pBox[2];
+	
 
 	g_Context.Shutdown();
 
@@ -273,7 +230,10 @@ void glutDisplay (void)
    glClearColor(0.8f,0.8f,0.8f,1.0f);
      glClear(GL_COLOR_BUFFER_BIT);
      glLoadIdentity();//loads identity matrix to reset drawings
-     glTranslatef(0.0f,yLocation,-5.0f);
+      glTranslatef(0.0f,0.0f,-5.0);
+     
+      glTranslatef(xLocation,0.0f,zLocation);
+
     glRotatef(yRotationAngle, 0.0f, 1.0f, 0.0f);
      renderPrimitive();
      glFlush();
@@ -306,7 +266,7 @@ void glutKeyboard (unsigned char key, int x, int y)
      glViewport(0, 0, (GLsizei)width, (GLsizei)height); // Set our viewport to the size of our window
     glMatrixMode(GL_PROJECTION); // Switch to the projection matrix so that we can manipulate how our scene is viewed
     glLoadIdentity(); // Reset the projection matrix to the identity matrix so that we don't get any artifacts (cleaning up)
-  gluPerspective(60, (GLfloat)width / (GLfloat)height, 1.0, 100.0); // Set the Field of view angle (in degrees), the aspect ratio of our window, and the new and far planes
+  gluPerspective(120, (GLfloat)width / (GLfloat)height, 1.0, 100.0); // Set the Field of view angle (in degrees), the aspect ratio of our window, and the new and far planes
     glMatrixMode(GL_MODELVIEW); // Switch back to the model view matrix, so that we can start drawing shapes correctly
  }
  
@@ -398,40 +358,37 @@ int main(int argc, char **argv)
 
 
 	g_pMainSlider = new XnVSelectableSlider1D(3,0,AXIS_X,TRUE,.5,250,.05,"slider");
-	g_pMainSlider->RegisterItemHover(NULL, &MainSlider_OnHover);
+	//g_pMainSlider->RegisterItemHover(NULL, &MainSlider_OnHover);
 	g_pMainSlider->RegisterItemSelect(NULL, &MainSlider_OnSelect);
 	g_pMainSlider->RegisterActivate(NULL, &MainSlider_OnActivate);
 	g_pMainSlider->RegisterDeactivate(NULL, &MainSlider_OnDeactivate);
 	g_pMainSlider->RegisterPrimaryPointCreate(NULL, &MainSlider_OnPrimaryCreate);
 	g_pMainSlider->RegisterPrimaryPointDestroy(NULL, &MainSlider_OnPrimaryDestroy);
-        g_pMainSlider->RegisterScroll(NULL, &MainSlider_ScrollCB);
+      
 	g_pMainSlider->RegisterValueChange(NULL, &MainSlider_OnValueChange);
 	g_pMainSlider->SetValueChangeOnOffAxis(true);
 
-	// Creat the flow manager
+        //create swipe detector
+        g_pSwipeDetector= new XnVSwipeDetector();
+       
+                g_pSwipeDetector->RegisterSwipeUp(NULL, &Swipe_SwipeUp);
+		g_pSwipeDetector->RegisterSwipeDown(NULL, &Swipe_SwipeDown);
+		g_pSwipeDetector->RegisterSwipeLeft(NULL, &Swipe_SwipeLeft);
+		g_pSwipeDetector->RegisterSwipeRight(NULL, &Swipe_SwipeRight);
+                //std::cout<<"motion speed thresh"<<g_pSwipeDetector->GetMotionSpeedThreshold();
+g_pSwipeDetector->SetMotionSpeedThreshold(.15f);
+
+               //std::cout<<"motion speed thresh"<<g_pSwipeDetector->GetMotionSpeedThreshold();
+g_pMainPush= new XnVPushDetector();
+	g_pMainPush->RegisterPush(NULL, &Push_Pushed);
+
+// Creat the flow manager
 	g_pMainFlowRouter = new XnVFlowRouter;
 
 	// Connect flow manager to the point tracker
 	g_pSessionManager->AddListener(g_pMainFlowRouter);
-
-	// Create the MyBox objects
-	XnPoint3D ptMax, ptMin;
-	ptMax.Z = ptMin.Z = 0;
-	ptMax.Y = GL_WIN_SIZE_Y-50;
-	ptMin.Y = GL_WIN_SIZE_Y-300;
-
-	ptMax.X = 50; ptMin.X = 240;
-	g_pBox[0] = new MyBox(ptMax, ptMin);
-	ptMax.X = 260; ptMin.X = 450;
-	g_pBox[1] = new MyBox(ptMax, ptMin);
-	ptMax.X = 470; ptMin.X = 650;
-	g_pBox[2] = new MyBox(ptMax, ptMin);
-
-	// Register callback to the MyBox objects for their Leave event.
-	g_pBox[0]->RegisterLeave(NULL, &MyBox_Leave);
-	g_pBox[1]->RegisterLeave(NULL, &MyBox_Leave);
-	g_pBox[2]->RegisterLeave(NULL, &MyBox_Leave);
-
+        g_pSessionManager->AddListener(g_pSwipeDetector);
+        g_pSessionManager->AddListener(g_pMainPush);
 	g_Context.StartGeneratingAll();
 
 	
@@ -440,11 +397,6 @@ int main(int argc, char **argv)
 	glutMainLoop();
 
 	
-
-	//glDisable(GL_DEPTH_TEST);
-//	glEnable(GL_TEXTURE_2D);
-	//glEnableClientState(GL_VERTEX_ARRAY);
-	//glDisableClientState(GL_COLOR_ARRAY);
 
 
 

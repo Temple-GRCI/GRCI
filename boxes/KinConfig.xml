@@ -14,11 +14,11 @@
        
 
 	<ProductionNodes>
-  
+  <!--
 <Recording file="boxtest.oni" />
 <Node type="Gesture" />
 		<Node type="Hands" />
-<!--
+-->
 		<Node type="Image" name="Image1">
 			<Configuration>
 				<MapOutputMode xRes="640" yRes="480" FPS="30"/>
@@ -33,6 +33,6 @@
 </Node>
 		     <Node type="Gesture" />
 		<Node type="Hands" />
--->
+
         </ProductionNodes>
 </OpenNI>
