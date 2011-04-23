@@ -34,7 +34,7 @@
 
 #include "signal_catch.h"
 GLfloat verts_box[]={(1),(1),(-1),
-                   (-1),(1),(-1),
+                     (-1),(1),(-1),
                    (-1),(-1),(-1),
                    (1),(-1),(-1),
                     (1),(-1),(1),
@@ -42,20 +42,23 @@ GLfloat verts_box[]={(1),(1),(-1),
                     (-1),(1),(1),
                      (-1),(-1),(1)};
                                    // 8 of vertex coords
-GLubyte indices_box[] = {0,1,2,3,   // 24 of indices
-                     0,3,4,5,
-                     0,5,6,1,
-                     1,6,7,2,
-                     7,4,3,2,
-                     4,7,6,5};
+GLubyte indices_box[] = {0,1,2,3,
+                         0,3,4,5,
+                         0,5,6,1,
+                         1,6,7,2,
+                         7,4,3,2,
+                         4,7,6,5};
+GLfloat face_color[]={};
 
 int rows=10;
 int columns=10;
 float yLocation = 0.0f; // Keep track of our position on the y axis.
 float xLocation = 0.0f; // Keep track of our position on the x axis.
-float zLocation = 0.0f; // Keep track of our position on the z axis.
+float zLocation = 100.0f; // Keep track of our position on the z axis.
 float xRotationAngle = 0.0f; // The angle of rotation for our object
 float yRotationAngle = 0.0f; // The angle of rotation for our object
+
+float zRotationAngle = 0.0f;
 
 
 
@@ -84,19 +87,19 @@ void XN_CALLBACK_TYPE MainSlider_OnSelect(XnInt32 nItem, XnVDirection dir, void*
      
         else if (dir == DIRECTION_BACKWARD)
 	{
-            zLocation+=5.0;
-            printf("Slider: Backward\n");
+            
+           // printf("Slider: Backward\n");
 	}
         else if (dir == DIRECTION_FORWARD)
 	{
             
-            printf("Slider: Forward\n");
+            //printf("Slider: Forward\n");
 	}
 
         
 	else
 	{
-		printf("Slider: Bad direction for selection: %s\n", XnVDirectionAsString(dir));
+		//printf("Slider: Bad direction for selection: %s\n", XnVDirectionAsString(dir));
 	}
 }
 
@@ -105,8 +108,18 @@ void XN_CALLBACK_TYPE MainSlider_OnValueChange(XnFloat fValue, void* cxt)
 	g_bActive = true;
 	g_bIsInput = true;
 	g_fValue = fValue;
-        yRotationAngle=fValue*360;
-         //printf("Slider pos :%f\n",fValue);
+           // printf("Slider pos :%f\n",fValue);
+        if(fValue<0.5){
+            //zLocation-=(.5-(fValue))/10;
+            yLocation += ((.5-(fValue))/10) * sin(yRotationAngle);
+            xLocation += ((.5-(fValue))/10) * cos(yRotationAngle);
+        }else{
+            //zLocation+=(fValue-.5)/10;
+            yLocation-=((fValue-.5)/10) * sin(yRotationAngle);
+            xLocation-=((fValue-.5)/10) * cos(yRotationAngle);
+        }
+          //printf("slider value : %f\n",zLocation);
+         // printf("slider value : %f\n",yLocation);
 }
 
 void XN_CALLBACK_TYPE MainSlider_OnActivate(void* cxt)
@@ -152,14 +165,16 @@ yRotationAngle = 0.0f;
 
 	static void XN_CALLBACK_TYPE Swipe_SwipeLeft(XnFloat fVelocity, XnFloat fAngle, void* cxt)
 	{
-	yRotationAngle-=90.0;
+            yRotationAngle += 5.0f;
+            //zRotationAngle += 30.0f;
             printf("Swipe Left!\n");
 		
 	}
 
 	static void XN_CALLBACK_TYPE Swipe_SwipeRight(XnFloat fVelocity, XnFloat fAngle, void* cxt)
 	{
-	yRotationAngle+=90.0;
+            yRotationAngle -= 5.0f;
+            //zRotationAngle -= 30.0f;
             printf("Swipe Right!\n");
 		
 	}
@@ -168,7 +183,7 @@ yRotationAngle = 0.0f;
         static void XN_CALLBACK_TYPE Push_Pushed(XnFloat fVelocity, XnFloat fAngle, void* cxt)
 	{
 		printf("Push! velocity %f angle %f\n",fVelocity,fAngle);
-zLocation-=5.0;
+                //zLocation-=5.0;
 
 	}
 
@@ -196,10 +211,13 @@ void CleanupExit()
 	exit (1);
 }
 void renderPrimitive (void) {
-   glColor3f(.2,.3,.5);
+  //glColor3f(.2,.3,.5);
+    glEnableClientState(GL_COLOR_ARRAY);
      glEnableClientState(GL_VERTEX_ARRAY);
 glVertexPointer(3, GL_FLOAT, 0, verts_box);
+glColorPointer(3, GL_FLOAT,0,face_color);
 glDrawElements(GL_QUADS, 24, GL_UNSIGNED_BYTE, indices_box);
+
 
 
 glBegin(GL_LINES);
@@ -223,18 +241,20 @@ glColor3f(1.0,0.0,.0);
 void glutDisplay (void)
 {
 	// Read next available data
-	g_Context.WaitAndUpdateAll();
+	//g_Context.WaitAndUpdateAll();
 
 	// Process the data
-	g_pSessionManager->Update(&g_Context);
+	//g_pSessionManager->Update(&g_Context);
    glClearColor(0.8f,0.8f,0.8f,1.0f);
      glClear(GL_COLOR_BUFFER_BIT);
      glLoadIdentity();//loads identity matrix to reset drawings
-      glTranslatef(0.0f,0.0f,-5.0);
+      glTranslatef(0.0f,0.0f,-15.0);
      
-      glTranslatef(xLocation,0.0f,zLocation);
+      glTranslatef(xLocation,yLocation, 0.0f);
+      //glTranslatef(xLocation*cos(xRotationAngle), yLocation*sin(yRotationAngle), 0.0f);
 
-    glRotatef(yRotationAngle, 0.0f, 1.0f, 0.0f);
+    glRotatef(yRotationAngle, 0.0f, 0.0f, 1.0f);
+      
      renderPrimitive();
      glFlush();
 	
@@ -254,8 +274,23 @@ void glutIdle (void)
 }
 void glutKeyboard (unsigned char key, int x, int y)
 {
+   
 	switch (key)
 	{
+            case 'a':
+                yRotationAngle += 5.0f;
+                break;
+
+            case 'd':
+                    yRotationAngle -= 5.0f;
+                    break;
+            case 'w':
+           MainSlider_OnValueChange(1, NULL);
+           break;
+            case 'z':
+                    MainSlider_OnValueChange(0, NULL);
+                    break;
+
 	case 27:
 		CleanupExit();
 	}
@@ -263,10 +298,12 @@ void glutKeyboard (unsigned char key, int x, int y)
 
  void reshape (int width, int height) {
 
+   
+
      glViewport(0, 0, (GLsizei)width, (GLsizei)height); // Set our viewport to the size of our window
     glMatrixMode(GL_PROJECTION); // Switch to the projection matrix so that we can manipulate how our scene is viewed
     glLoadIdentity(); // Reset the projection matrix to the identity matrix so that we don't get any artifacts (cleaning up)
-  gluPerspective(120, (GLfloat)width / (GLfloat)height, 1.0, 100.0); // Set the Field of view angle (in degrees), the aspect ratio of our window, and the new and far planes
+  gluPerspective(60, (GLfloat)width / (GLfloat)height, 1.0, 50.0); // Set the Field of view angle (in degrees), the aspect ratio of our window, and the new and far planes
     glMatrixMode(GL_MODELVIEW); // Switch back to the model view matrix, so that we can start drawing shapes correctly
  }
  
@@ -329,6 +366,7 @@ void XN_CALLBACK_TYPE SessionEnd(void* UserCxt)
 
 int main(int argc, char **argv)
 {
+    /*
 	XnStatus rc = XN_STATUS_OK;
 	xn::EnumerationErrors errors;
 
@@ -351,13 +389,12 @@ int main(int argc, char **argv)
 
 	g_pSessionManager->RegisterSession(NULL, &SessionStart, &SessionEnd);
 
-	// Start catching signals for quit indications
-	CatchSignals(&g_bQuit);
+	
 
 	// Create and initialize the main slider
 
 
-	g_pMainSlider = new XnVSelectableSlider1D(3,0,AXIS_X,TRUE,.5,250,.05,"slider");
+	g_pMainSlider = new XnVSelectableSlider1D(1,0,AXIS_Z,FALSE,.5,300,150,"slider");
 	//g_pMainSlider->RegisterItemHover(NULL, &MainSlider_OnHover);
 	g_pMainSlider->RegisterItemSelect(NULL, &MainSlider_OnSelect);
 	g_pMainSlider->RegisterActivate(NULL, &MainSlider_OnActivate);
@@ -376,11 +413,15 @@ int main(int argc, char **argv)
 		g_pSwipeDetector->RegisterSwipeLeft(NULL, &Swipe_SwipeLeft);
 		g_pSwipeDetector->RegisterSwipeRight(NULL, &Swipe_SwipeRight);
                 //std::cout<<"motion speed thresh"<<g_pSwipeDetector->GetMotionSpeedThreshold();
-g_pSwipeDetector->SetMotionSpeedThreshold(.15f);
+                //sets sensitivity of swipe recognition
+   
+                 g_pSwipeDetector->SetMotionTime(500);//set how long the gesture needs to be to recognize
+                 g_pSwipeDetector->SetSteadyDuration(45);//set how long the hand has to be stable
 
                //std::cout<<"motion speed thresh"<<g_pSwipeDetector->GetMotionSpeedThreshold();
-g_pMainPush= new XnVPushDetector();
-	g_pMainPush->RegisterPush(NULL, &Push_Pushed);
+                g_pMainPush= new XnVPushDetector();
+                g_pMainPush->RegisterPush(NULL, &Push_Pushed);
+
 
 // Creat the flow manager
 	g_pMainFlowRouter = new XnVFlowRouter;
@@ -391,7 +432,7 @@ g_pMainPush= new XnVPushDetector();
         g_pSessionManager->AddListener(g_pMainPush);
 	g_Context.StartGeneratingAll();
 
-	
+	*/
 
 	glInit(&argc, argv);
 	glutMainLoop();

@@ -33,8 +33,6 @@ OBJECTDIR=build/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
-	${OBJECTDIR}/kbhit.o \
-	${OBJECTDIR}/signal_catch.o \
 	${OBJECTDIR}/main.o
 
 
@@ -61,16 +59,6 @@ LDLIBSOPTIONS=-Lusr/lib/
 dist/Debug/GNU-Linux-x86/boxes: ${OBJECTFILES}
 	${MKDIR} -p dist/Debug/GNU-Linux-x86
 	${LINK.cc} -l'OpenNI' -l'glut' -l'XnVNite' -l'GLU' -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/boxes ${OBJECTFILES} ${LDLIBSOPTIONS} 
-
-${OBJECTDIR}/kbhit.o: kbhit.cpp 
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} $@.d
-	$(COMPILE.cc) -g -I/usr/include/ni -I/usr/include/nite -MMD -MP -MF $@.d -o ${OBJECTDIR}/kbhit.o kbhit.cpp
-
-${OBJECTDIR}/signal_catch.o: signal_catch.cpp 
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} $@.d
-	$(COMPILE.cc) -g -I/usr/include/ni -I/usr/include/nite -MMD -MP -MF $@.d -o ${OBJECTDIR}/signal_catch.o signal_catch.cpp
 
 ${OBJECTDIR}/main.o: main.cpp 
 	${MKDIR} -p ${OBJECTDIR}

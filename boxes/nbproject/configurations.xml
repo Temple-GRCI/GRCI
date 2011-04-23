@@ -5,9 +5,6 @@
                    displayName="Header Files"
                    projectFiles="true"
                    kind="SOURCE_LOGICAL_FOLDER">
-      <itemPath>MyBox.h</itemPath>
-      <itemPath>kbhit.h</itemPath>
-      <itemPath>signal_catch.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles"
                    displayName="Resource Files"
@@ -18,9 +15,7 @@
                    displayName="Source Files"
                    projectFiles="true"
                    kind="SOURCE_LOGICAL_FOLDER">
-      <itemPath>kbhit.cpp</itemPath>
       <itemPath>main.cpp</itemPath>
-      <itemPath>signal_catch.cpp</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="Test Files"

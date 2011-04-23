@@ -33,8 +33,6 @@ OBJECTDIR=build/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
-	${OBJECTDIR}/kbhit.o \
-	${OBJECTDIR}/signal_catch.o \
 	${OBJECTDIR}/main.o
 
 
@@ -61,16 +59,6 @@ LDLIBSOPTIONS=
 dist/Release/GNU-Linux-x86/boxes: ${OBJECTFILES}
 	${MKDIR} -p dist/Release/GNU-Linux-x86
 	${LINK.cc} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/boxes ${OBJECTFILES} ${LDLIBSOPTIONS} 
-
-${OBJECTDIR}/kbhit.o: kbhit.cpp 
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} $@.d
-	$(COMPILE.cc) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/kbhit.o kbhit.cpp
-
-${OBJECTDIR}/signal_catch.o: signal_catch.cpp 
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} $@.d
-	$(COMPILE.cc) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/signal_catch.o signal_catch.cpp
 
 ${OBJECTDIR}/main.o: main.cpp 
 	${MKDIR} -p ${OBJECTDIR}
