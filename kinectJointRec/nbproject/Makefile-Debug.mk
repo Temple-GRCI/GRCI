@@ -59,17 +59,17 @@ LDLIBSOPTIONS=-L/usr/lib
 
 dist/Debug/GNU-Linux-x86/kinectjointrec: ${OBJECTFILES}
 	${MKDIR} -p dist/Debug/GNU-Linux-x86
-	${LINK.cc} -l'OpenNI' -l'glut' -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/kinectjointrec ${OBJECTFILES} ${LDLIBSOPTIONS} 
+	${LINK.cc} -l'OpenNI' -l'glut' -l'XnVNite' -l'GLU' -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/kinectjointrec ${OBJECTFILES} ${LDLIBSOPTIONS} 
 
 ${OBJECTDIR}/main.o: main.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
-	$(COMPILE.cc) -g -I/usr/include/ni -MMD -MP -MF $@.d -o ${OBJECTDIR}/main.o main.cpp
+	$(COMPILE.cc) -g -I/usr/include/ni -I/usr/include/nite -MMD -MP -MF $@.d -o ${OBJECTDIR}/main.o main.cpp
 
 ${OBJECTDIR}/SceneDrawer.o: SceneDrawer.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
-	$(COMPILE.cc) -g -I/usr/include/ni -MMD -MP -MF $@.d -o ${OBJECTDIR}/SceneDrawer.o SceneDrawer.cpp
+	$(COMPILE.cc) -g -I/usr/include/ni -I/usr/include/nite -MMD -MP -MF $@.d -o ${OBJECTDIR}/SceneDrawer.o SceneDrawer.cpp
 
 # Subprojects
 .build-subprojects:

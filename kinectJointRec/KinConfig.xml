@@ -4,7 +4,7 @@
 	</Licenses>
 	<Log writeToConsole="true" writeToFile="false">
 		<!-- 0 - Verbose, 1 - Info, 2 - Warning, 3 - Error (default) -->
-		<LogLevel value="1"/>
+		<LogLevel value="3"/>
 		<Masks>
 			<Mask name="ALL" on="true"/>
 		</Masks>
@@ -14,10 +14,13 @@
        
 
 	<ProductionNodes>
-            
+  <!--
 <Recording file="SkeletonRec.oni" />
+<Node type="Gesture" />
+		<Node type="Hands" />
+                <Node type="User" />
+-->
 
-<!--
 		<Node type="Image" name="Image1">
 			<Configuration>
 				<MapOutputMode xRes="640" yRes="480" FPS="30"/>
@@ -28,8 +31,11 @@
 			<Configuration>
 				<MapOutputMode xRes="640" yRes="480" FPS="30"/>
 				<Mirror on="false"/>
-			</Configuration>
-		</Node>
-              -->
-	</ProductionNodes>
+			</Configuration>	
+</Node>
+		     <Node type="Gesture" />
+		<Node type="Hands" />
+                <Node type="User" />
+
+        </ProductionNodes>
 </OpenNI>

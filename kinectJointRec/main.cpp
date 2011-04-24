@@ -41,6 +41,19 @@
 #include <XnCodecIDs.h>
 #include <XnCppWrapper.h>
 #include "SceneDrawer.h"
+#include "PointDrawer.h"
+#include "XnVNite.h"
+
+#include <XnVHandPointContext.h>
+#include <XnVSessionManager.h>
+#include <XnVFlowRouter.h>
+#include <XnVSwipeDetector.h>
+#include <XnVSelectableSlider1D.h>
+#include <XnVSteadyDetector.h>
+#include <XnVBroadcaster.h>
+#include <XnVPushDetector.h>
+
+
 #include <fstream>
 #include<stdio.h>
 #include<iostream>
@@ -60,30 +73,76 @@
 //---------------------------------------------------------------------------
 // Globals
 //---------------------------------------------------------------------------
+//open NI objects
 xn::Context g_Context;// represents an OpenNi Context Object
 xn::DepthGenerator g_DepthGenerator;
 xn::UserGenerator g_UserGenerator;
 xn::HandsGenerator g_HandsGenerator;
 xn::ImageGenerator g_ImageGenerator;
 xn::Recorder recorder;
-std::ofstream outpnt;
 
+//Nite objects
+XnVSessionManager*      g_SessionManager= NULL;
+XnVFlowRouter*          g_FlowRouter;
+XnVPushDetector*        g_pMainPush;
+XnVSelectableSlider1D*  g_pMainSlider;
+XnVSwipeDetector*       g_pSwipeDetector;
+XnVFlowRouter*          g_pMainFlowRouter;
+//XnVPointDrawer*         g_pDrawer;
+
+
+
+// model variables and controls
+GLfloat verts_box[]={(1),(1),(-1),
+                     (-1),(1),(-1),
+                     (-1),(-1),(-1),
+                     (1),(-1),(-1),
+                     (1),(-1),(1),
+                     (1),(1),(1),
+                     (-1),(1),(1),
+                     (-1),(-1),(1)};
+                                   // 8 of vertex coords
+GLubyte indices_box[] = {0,1,2,3,
+                         0,3,4,5,
+                         0,5,6,1,
+                         1,6,7,2,
+                         7,4,3,2,
+                         4,7,6,5};
+GLfloat face_color[]={};
+
+int rows=10;
+int columns=10;
+float yLocation = 0.0f; // Keep track of our position on the y axis.
+float xLocation = 0.0f; // Keep track of our position on the x axis.
+float zLocation = 0.0f; // Keep track of our position on the z axis.
+float xRotationAngle = 0.0f; // The angle of rotation for our object
+float yRotationAngle = 0.0f; // The angle of rotation for our object
+XnFloat g_fValue = 0.5f;
+
+int win1,win2;
+
+//Session state
+XnBool g_bActive = false;
+XnBool g_bIsInput = false;
+XnBool g_bInSession = false;
+//skeleton detection
 XnBool g_bNeedPose = FALSE;
 XnChar g_strPose[20] = "";
+//booleans for glwindow
 XnBool g_bDrawBackground = TRUE;
 XnBool g_bDrawPixels = TRUE;
 XnBool g_bDrawSkeleton = TRUE;
 XnBool g_bPrintID = TRUE;
 XnBool g_bPrintState = TRUE;
-XnBool g_runfile = TRUE; // Use mock node(T) or kinect(F)
+//booleans recording and playback of files
+XnBool g_runfile = FALSE; // Use mock node(T) or kinect(F)
 XnBool g_Record = FALSE; // Record a new .oni file(T)
-
-
 XnBool g_bPause = false;
 XnBool g_bRecord = false;
 
 XnBool g_bQuit = false;
 
+std::ofstream outpnt;
 //---------------------------------------------------------------------------
 // Code
 //---------------------------------------------------------------------------
@@ -104,6 +163,18 @@ void CleanupExit()
  * @param nId			XnUserID	The user's number.
  * @param pCookie
  */
+
+void XN_CALLBACK_TYPE SessionStart(const XnPoint3D& ptFocus, void* UserCxt)
+{
+  	g_bInSession = true;
+        g_pMainFlowRouter->SetActive(g_pMainSlider);
+        printf("/t set active/n");
+}
+void XN_CALLBACK_TYPE SessionEnd(void* UserCxt)
+{
+ 	g_bInSession = false;
+        g_pMainFlowRouter->SetActive(NULL);
+}
 
 void XN_CALLBACK_TYPE User_NewUser(xn::UserGenerator& generator, XnUserID nId, void* pCookie)
 {
@@ -220,6 +291,147 @@ void XN_CALLBACK_TYPE UserCalibration_CalibrationEnd(xn::SkeletonCapability& cap
 	}
 }
 
+
+
+// Main slider callback functions
+
+
+void XN_CALLBACK_TYPE MainSlider_OnSelect(XnInt32 nItem, XnVDirection dir, void* cxt)
+{
+	if (nItem == -1)
+	{
+	}
+
+        else if (dir == DIRECTION_BACKWARD)
+	{
+
+            printf("Slider: Backward\n");
+	}
+        else if (dir == DIRECTION_FORWARD)
+	{
+
+            printf("Slider: Forward\n");
+	}
+
+
+	else
+	{
+		printf("Slider: Bad direction for selection: %s\n", XnVDirectionAsString(dir));
+	}
+}
+
+void XN_CALLBACK_TYPE MainSlider_OnValueChange(XnFloat fValue, void* cxt)
+{
+	g_bActive = true;
+	g_bIsInput = true;
+	g_fValue = fValue;
+            printf("Slider pos :%f\n",fValue);
+        if(fValue<0.5)
+        zLocation-=(.5-(fValue))/10;
+        else
+          zLocation+=(fValue-.5)/10;
+
+          printf("slider value : %f\n",zLocation);
+}
+
+void XN_CALLBACK_TYPE MainSlider_OnActivate(void* cxt)
+{
+	g_bActive = true;
+	g_bIsInput = false;
+}
+void XN_CALLBACK_TYPE MainSlider_OnDeactivate(void* cxt)
+{
+	g_bActive = false;
+	g_bIsInput = false;
+}
+void XN_CALLBACK_TYPE MainSlider_OnPrimaryCreate(const XnVHandPointContext* hand, const XnPoint3D& ptFocus, void* cxt)
+{
+	g_bIsInput = true;
+}
+void XN_CALLBACK_TYPE MainSlider_OnPrimaryDestroy(XnUInt32 nID, void* cxt)
+{
+	g_bIsInput = false;
+}
+
+
+
+// Swipe detector Callbacks
+	static void XN_CALLBACK_TYPE Swipe_SwipeUp(XnFloat fVelocity, XnFloat fAngle, void* cxt)
+	{
+		printf("Swipe Up!\n");
+                yLocation = 0.0f; // Keep track of our position on the y axis.
+                xLocation = 0.0f; // Keep track of our position on the x axis.
+                zLocation = 0.0f; // Keep track of our position on the z axis.
+                xRotationAngle = 0.0f; // The angle of rotation for our object
+                yRotationAngle = 0.0f;
+	}
+
+	static void XN_CALLBACK_TYPE Swipe_SwipeDown(XnFloat fVelocity, XnFloat fAngle, void* cxt)
+	{
+	printf("Swipe Down!\n");
+	}
+
+	static void XN_CALLBACK_TYPE Swipe_SwipeLeft(XnFloat fVelocity, XnFloat fAngle, void* cxt)
+	{
+	 yRotationAngle += 45.0f;
+         printf("Swipe Left!\n");
+        }
+
+	static void XN_CALLBACK_TYPE Swipe_SwipeRight(XnFloat fVelocity, XnFloat fAngle, void* cxt)
+	{
+         yRotationAngle -= 45.0f;
+         printf("Swipe Right!\n");
+	}
+
+        //push detector callbacks
+        static void XN_CALLBACK_TYPE Push_Pushed(XnFloat fVelocity, XnFloat fAngle, void* cxt)
+	{
+	printf("Push! velocity %f angle %f\n",fVelocity,fAngle);
+	}
+
+
+
+
+        //draws the model
+void renderPrimitive (void) {
+        //glColor3f(.2,.3,.5);
+        glEnableClientState(GL_COLOR_ARRAY);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, 0, verts_box);
+        glColorPointer(3, GL_FLOAT,0,face_color);
+        glDrawElements(GL_QUADS, 24, GL_UNSIGNED_BYTE, indices_box);
+
+        //draw axis lines
+        glBegin(GL_LINES);
+
+        //x axis
+        glColor3f(1.0,0.0,.0);
+        glVertex3f(-10,0,0 );
+        glVertex3f(10,0,0 );
+
+        //y axis
+        glColor3f(0.0,1.0,.0);
+        glVertex3f(0,-10,0 );
+        glVertex3f(0,10,0 );
+
+        //z-axis
+        glColor3f(0.0,0.0,1.0);
+        glVertex3f(0,0,-10 );
+        glVertex3f(0,0,10 );
+
+        glEnd();
+}
+
+ void reshape (int width, int height) {
+
+     glViewport(0, 0, (GLsizei)width, (GLsizei)height); // Set our viewport to the size of our window
+     glMatrixMode(GL_PROJECTION); // Switch to the projection matrix so that we can manipulate how our scene is viewed
+     glLoadIdentity(); // Reset the projection matrix to the identity matrix so that we don't get any artifacts (cleaning up)
+     gluPerspective(30, (GLfloat)width / (GLfloat)height, 1.0, 100.0); // Set the Field of view angle (in degrees), the aspect ratio of our window, and the new and far planes
+     glMatrixMode(GL_MODELVIEW); // Switch back to the model view matrix, so that we can start drawing shapes correctly
+ }
+
+
 /**
  * glutDisplay()
  *
@@ -228,39 +440,44 @@ void XN_CALLBACK_TYPE UserCalibration_CalibrationEnd(xn::SkeletonCapability& cap
  * @param void
  */
 
-void glutDisplay (void)
+void glutDisplayS (void)
 {
-	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// Setup the OpenGL viewpoint
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity();
+        // Setup the OpenGL viewpoint
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
 
-	xn::SceneMetaData sceneMD;//Represents a MetaData object for generators producing scene analysis maps
-	xn::DepthMetaData depthMD;
-	g_DepthGenerator.GetMetaData(depthMD);
-	glOrtho(0, depthMD.XRes(), depthMD.YRes(), 0, -1.0, 1.0);
+        xn::SceneMetaData sceneMD;//Represents a MetaData object for generators producing scene analysis maps
+        xn::DepthMetaData depthMD;
+        g_DepthGenerator.GetMetaData(depthMD);
+        glOrtho(0, depthMD.XRes(), depthMD.YRes(), 0, -1.0, 1.0);
 
-	glDisable(GL_TEXTURE_2D);
+        glDisable(GL_TEXTURE_2D);
 
-	if (!g_bPause)
-	{
-		// Read next available data
-		g_Context.WaitAnyUpdateAll();
-		if(g_Record)
-			recorder.Record();
-		}
+        if (!g_bPause)
+        {
+                // Read next available data
+                g_Context.WaitAnyUpdateAll();
+                if(g_Record)
+                        recorder.Record();
+                }
 
-		// Process the data
-		g_DepthGenerator.GetMetaData(depthMD);
-		// Get the pixels that belong to a user
-		g_UserGenerator.GetUserPixels(0, sceneMD);
-		DrawDepthMap(depthMD, sceneMD);
+                // Process the data
+                g_DepthGenerator.GetMetaData(depthMD);
+                // Get the pixels that belong to a user
+                g_UserGenerator.GetUserPixels(0, sceneMD);
+                DrawDepthMap(depthMD, sceneMD);
 
-		// Swaps the buffers of the current window if double buffered.
-		glutSwapBuffers();
+                // Swaps the buffers of the current window if double buffered.
+                glutSwapBuffers();
+
 }
+
+
+
+
 
 /**
  * glutIdle()
@@ -268,15 +485,17 @@ void glutDisplay (void)
  * Does this only get called if nothing moves in the frame?
  *
  */
-void glutIdle (void)
+void glutIdleS (void)
 {
 	if (g_bQuit) {
 		CleanupExit();
 	}
 
 	// Display the frame
+        glutSetWindow(win1);
 	glutPostRedisplay();
 }
+
 
 /**
  * glutKeyboard()
@@ -289,7 +508,7 @@ void glutIdle (void)
  * @param y	int				purpose unknown
  */
 
-void glutKeyboard (unsigned char key, int x, int y)
+void glutKeyboardS (unsigned char key, int x, int y)
 {
 	switch (key)
 	{
@@ -326,7 +545,82 @@ void glutKeyboard (unsigned char key, int x, int y)
 				printf("Record on/off\n");
 			break;
 	}
-} // end glutKeyboard
+} 
+
+
+void glutDisplayM (void)
+{
+	// Read next available data
+	g_Context.WaitNoneUpdateAll();
+
+	// Process the data
+	g_SessionManager->Update(&g_Context);
+   glClearColor(0.8f,0.8f,0.8f,1.0f);
+     glClear(GL_COLOR_BUFFER_BIT);
+     glLoadIdentity();//loads identity matrix to reset drawings
+      glTranslatef(0.0f,0.0f,-15.0);
+
+      glTranslatef(xLocation,yLocation, zLocation);
+      //glTranslatef(xLocation*cos(xRotationAngle), yLocation*sin(yRotationAngle), 0.0f);
+
+    glRotatef(yRotationAngle, 0.0f, 0.0f, 1.0f);
+
+     renderPrimitive();
+     glFlush();
+
+
+}
+
+void glutIdleM (void)
+{
+	if (g_bQuit) {
+		CleanupExit();
+	}
+        glutDisplayM();
+
+	// Display the frame
+	glutPostRedisplay();
+}
+
+void glutIdleSM (void)
+{
+	if (g_bQuit) {
+		CleanupExit();
+	}
+    glutSetWindow(win2);
+        glutDisplayM();
+
+	// Display the frame
+	glutPostRedisplay();
+        glutSetWindow(win1);
+glutPostRedisplay();
+}
+
+
+
+void glutKeyboardM (unsigned char key, int x, int y)
+{
+
+	switch (key)
+	{
+            case 'a':
+                yRotationAngle += 5.0f;
+                break;
+
+            case 'd':
+                    yRotationAngle -= 5.0f;
+                    break;
+            case 'w':
+           MainSlider_OnValueChange(1, NULL);
+           break;
+            case 'z':
+                    MainSlider_OnValueChange(0, NULL);
+                    break;
+
+	case 27:
+		CleanupExit();
+	}
+}
 
 /**
  * glInit()
@@ -337,112 +631,166 @@ void glutKeyboard (unsigned char key, int x, int y)
  * @param argv		char**	points to the command line args.
  */
 
+
 void glInit (int * pargc, char ** argv)
 {
-	glutInit(pargc, argv);
-	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
+        glutInit(pargc, argv);
+        /////////////////window 1 ///////////////////////////////
+        glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
+        glutInitWindowSize(GL_WIN_SIZE_X, GL_WIN_SIZE_Y);
+        win1=glutCreateWindow ("Prime Sense User Tracker Viewer");
+        glutSetCursor(GLUT_CURSOR_NONE);
+
+        glutKeyboardFunc(glutKeyboardS);
+        glutDisplayFunc(glutDisplayS);
+        glutIdleFunc(glutIdleSM);
+
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_TEXTURE_2D);
+
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glDisableClientState(GL_COLOR_ARRAY);
+
+
+        ////////////////window 2//////////////////////
+         
+	glutInitDisplayMode(GLUT_SINGLE);
 	glutInitWindowSize(GL_WIN_SIZE_X, GL_WIN_SIZE_Y);
-	glutCreateWindow ("Prime Sense User Tracker Viewer");
-	//glutFullScreen();
-	glutSetCursor(GLUT_CURSOR_NONE);
+	//create first window
 
-	glutKeyboardFunc(glutKeyboard);
-	glutDisplayFunc(glutDisplay);
-	glutIdleFunc(glutIdle);
+        glutInitWindowPosition (1100, 100);
+        win2=glutCreateWindow ("Box");
 
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_TEXTURE_2D);
+	
+	glutKeyboardFunc(glutKeyboardM);
+	glutReshapeFunc(reshape);
+        glutDisplayFunc(glutDisplayM);
+	glutIdleFunc(glutIdleSM);
 
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_COLOR_ARRAY);
+}
+
+#define CHECK_ERRORS(rc, errors, what)		\
+	if (rc == XN_STATUS_NO_NODE_PRESENT)	\
+{										\
+	XnChar strError[1024];				\
+	errors.ToString(strError, 1024);	\
+	printf("%s\n", strError);			\
+	return (rc);						\
 }
 
 int main(int argc, char **argv)
 {
-	XnStatus rc = XN_STATUS_OK;
-	
-	// Handles to a registered callback function
-	XnCallbackHandle hUserCallbacks, hCalibrationCallbacks, hPoseCallbacks;
+        XnStatus rc = XN_STATUS_OK;
 
-	outpnt.open("kindat"); // openfile to save data
-	std::cout<<"\n\n\nKEYBOARD TOGGLE:(focus must be on GL window)\n b-background \n "
-			 "x-draw all pixels \n s-Skeleton \n i-print labels \n l- print state \n "
-			 "p-pause \n r-record data points\n";
+        // Handles to a registered callback function
+        XnCallbackHandle hUserCallbacks, hCalibrationCallbacks, hPoseCallbacks;
 
-	// must be called before any OpenNI function ( except xnInitFromXmlFile() )
-	g_Context.Init();
+        outpnt.open("kindat"); // openfile to save data
+        std::cout<<"\n\n\nKEYBOARD TOGGLE:(focus must be on GL window)\n b-background \n "
+                         "x-draw all pixels \n s-Skeleton \n i-print labels \n l- print state \n "
+                         "p-pause \n r-record data points\n";
 
-	if(g_runfile){
-		// Uses an xml file to set config of nodes
-		//g_Context.InitFromXmlFile("KinConfig.xml");
-		// Playing sample recording. Replace file name to any file to play.
-		g_Context.OpenFileRecording("SkeletonRec.oni");
-		//g_Context.OpenFileRecording("PRrec4w.oni");
-	}
+        // must be called before any OpenNI function ( except xnInitFromXmlFile() )
+        rc = g_Context.InitFromXmlFile("KinConfig.xml");
 
-	g_DepthGenerator.Create(g_Context);	// creates a depth generator
-	g_UserGenerator.Create(g_Context);		// creates a user generator
-	g_ImageGenerator.Create(g_Context);	// creates a image generator
-	g_HandsGenerator.Create(g_Context);
 
-	// Returns the first found existing node of the specified type(pointer to context. ,type,handle to node)
-	g_Context.FindExistingNode(XN_NODE_TYPE_DEPTH, g_DepthGenerator);
-	g_Context.FindExistingNode(XN_NODE_TYPE_USER, g_UserGenerator);
-	g_Context.FindExistingNode(XN_NODE_TYPE_IMAGE,g_ImageGenerator);
-	rc = g_Context.FindExistingNode(XN_NODE_TYPE_HANDS, g_HandsGenerator);
-	CHECK_RC(rc, "Find hands generator");
-        
-	if(g_Record){
-		recorder.Create(g_Context);	// creates a recorder node
-		recorder.SetDestination(XN_RECORD_MEDIUM_FILE,"recording.tmp.oni");
-		recorder.AddNodeToRecording(g_DepthGenerator);
-		//recorder.AddNodeToRecording(g_ImageGenerator);
-	}
+        // Returns the first found existing node of the specified type(pointer to context. ,type,handle to node)
+       g_Context.FindExistingNode(XN_NODE_TYPE_DEPTH, g_DepthGenerator);
+       g_Context.FindExistingNode(XN_NODE_TYPE_USER, g_UserGenerator);
+       g_Context.FindExistingNode(XN_NODE_TYPE_HANDS, g_HandsGenerator);
 
-	/**
-	 * Register____Callbacks()
-	 *
-	 * For your information.
-	 *
-	 * @param detection start	XnCallbackHandle
-      * @param detection end		XnCallbackHandle
-	 * @param null				What the hell is a pCookie?
-	 * @param callback handle	XnCallbackHandle
+
+        if(g_Record){
+                recorder.Create(g_Context);     // creates a recorder node
+                recorder.SetDestination(XN_RECORD_MEDIUM_FILE,"recording.tmp.oni");
+                recorder.AddNodeToRecording(g_DepthGenerator);
+                //recorder.AddNodeToRecording(g_ImageGenerator);
+        }
+
+       	// Create and initialize point tracker
+	g_SessionManager = new XnVSessionManager;
+	g_SessionManager->Initialize(&g_Context, "Wave", "RaiseHand");
+        g_SessionManager->RegisterSession(NULL, &SessionStart, &SessionEnd);
+
+       // Create and initialize the main slider
+	g_pMainSlider = new XnVSelectableSlider1D(1,0,AXIS_Z,FALSE,.5,300,150,"slider");
+	g_pMainSlider->RegisterItemSelect(NULL, &MainSlider_OnSelect);
+	g_pMainSlider->RegisterActivate(NULL, &MainSlider_OnActivate);
+	g_pMainSlider->RegisterDeactivate(NULL, &MainSlider_OnDeactivate);
+	g_pMainSlider->RegisterPrimaryPointCreate(NULL, &MainSlider_OnPrimaryCreate);
+	g_pMainSlider->RegisterPrimaryPointDestroy(NULL, &MainSlider_OnPrimaryDestroy);
+	g_pMainSlider->RegisterValueChange(NULL, &MainSlider_OnValueChange);
+	g_pMainSlider->SetValueChangeOnOffAxis(true);
+
+        //create swipe detector
+        g_pSwipeDetector= new XnVSwipeDetector();
+        g_pSwipeDetector->RegisterSwipeUp(NULL, &Swipe_SwipeUp);
+	g_pSwipeDetector->RegisterSwipeDown(NULL, &Swipe_SwipeDown);
+	g_pSwipeDetector->RegisterSwipeLeft(NULL, &Swipe_SwipeLeft);
+	g_pSwipeDetector->RegisterSwipeRight(NULL, &Swipe_SwipeRight);
+
+        //sets sensitivity of swipe recognition
+        g_pSwipeDetector->SetMotionTime(500);//set how long the gesture needs to be to recognize
+        g_pSwipeDetector->SetSteadyDuration(45);//set how long the hand has to be stable
+
+        //create main push detector
+        g_pMainPush= new XnVPushDetector();
+        g_pMainPush->RegisterPush(NULL, &Push_Pushed);
+
+        // Create the flow manager
+	g_pMainFlowRouter = new XnVFlowRouter;
+
+	// Connect flow manager to the point tracker
+	g_SessionManager->AddListener(g_pMainFlowRouter);
+        g_SessionManager->AddListener(g_pSwipeDetector);
+        g_SessionManager->AddListener(g_pMainPush);
+	//create point drawer
+        //g_pDrawer = new XnVPointDrawer(100, g_DepthGenerator);//takes in history and depth generator
+        //g_pMainFlowRouter->SetActive(g_pDrawer);
+        /**
+         * Register____Callbacks()
+         *
+         * For your information.
+         *
+         * @param detection start       XnCallbackHandle
+         * @param detection end            XnCallbackHandle
+         * @param null                          What the hell is a pCookie?
+         * @param callback handle       XnCallbackHandle
       */
-	g_UserGenerator.RegisterUserCallbacks(User_NewUser, User_LostUser, NULL, hUserCallbacks);
-	g_UserGenerator.GetSkeletonCap().RegisterCalibrationCallbacks(
-			UserCalibration_CalibrationStart,
-			UserCalibration_CalibrationEnd,
-			NULL,
-			hCalibrationCallbacks
-	);
+        g_UserGenerator.RegisterUserCallbacks(User_NewUser, User_LostUser, NULL, hUserCallbacks);
+        g_UserGenerator.GetSkeletonCap().RegisterCalibrationCallbacks(
+                        UserCalibration_CalibrationStart,
+                        UserCalibration_CalibrationEnd,
+                        NULL,
+                        hCalibrationCallbacks
+        );
 
-	
 
-	if (g_UserGenerator.GetSkeletonCap().NeedPoseForCalibration())
-	{
-		g_bNeedPose = TRUE;
-		if (!g_UserGenerator.IsCapabilitySupported(XN_CAPABILITY_POSE_DETECTION))
-		{
-			printf("Pose required, but not supported\n");
-			return 1;
-		}
-		g_UserGenerator.GetPoseDetectionCap().RegisterToPoseCallbacks(
-				UserPose_PoseDetected,
-				NULL,
-				NULL,
-				hPoseCallbacks
-		);
-		g_UserGenerator.GetSkeletonCap().GetCalibrationPose(g_strPose);
-	}
 
-	g_UserGenerator.GetSkeletonCap().SetSkeletonProfile(XN_SKEL_PROFILE_ALL);
-	g_Context.StartGeneratingAll();//Make sure all generators are generating data.
-	
+        if (g_UserGenerator.GetSkeletonCap().NeedPoseForCalibration())
+        {
+                g_bNeedPose = TRUE;
+                if (!g_UserGenerator.IsCapabilitySupported(XN_CAPABILITY_POSE_DETECTION))
+                {
+                        printf("Pose required, but not supported\n");
+                        return 1;
+                }
+                g_UserGenerator.GetPoseDetectionCap().RegisterToPoseCallbacks(
+                                UserPose_PoseDetected,
+                                NULL,
+                                NULL,
+                                hPoseCallbacks
+                );
+                g_UserGenerator.GetSkeletonCap().GetCalibrationPose(g_strPose);
+        }
 
-	glInit(&argc, argv);
-	glutMainLoop();
-        
-	outpnt.close();
-        
+        g_UserGenerator.GetSkeletonCap().SetSkeletonProfile(XN_SKEL_PROFILE_ALL);
+        g_Context.StartGeneratingAll();//Make sure all generators are generating data.
+
+
+        glInit(&argc, argv);
+        glutMainLoop();
+
+        outpnt.close();
+
 }

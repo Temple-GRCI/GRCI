@@ -43,13 +43,14 @@
         <ccTool>
           <incDir>
             <pElem>/usr/include/ni</pElem>
+            <pElem>/usr/include/nite</pElem>
           </incDir>
         </ccTool>
         <linkerTool>
           <linkerAddLib>
             <pElem>/usr/lib</pElem>
           </linkerAddLib>
-          <commandLine>-l'OpenNI' -l'glut'</commandLine>
+          <commandLine>-l'OpenNI' -l'glut' -l'XnVNite' -l'GLU'</commandLine>
         </linkerTool>
       </compileType>
     </conf>
