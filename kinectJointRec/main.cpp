@@ -59,6 +59,8 @@
 #include<iostream>
 #include <GL/glut.h>
 
+#include "pointsInit.h"
+
 #define GL_WIN_SIZE_X 720
 #define GL_WIN_SIZE_Y 480
 
@@ -91,27 +93,9 @@ XnVFlowRouter*          g_pMainFlowRouter;
 //XnVPointDrawer*         g_pDrawer;
 
 
+const float ANGLE = 15.0f;
+const float PI = 3.14f;
 
-// model variables and controls
-GLfloat verts_box[]={(1),(1),(-1),
-                     (-1),(1),(-1),
-                     (-1),(-1),(-1),
-                     (1),(-1),(-1),
-                     (1),(-1),(1),
-                     (1),(1),(1),
-                     (-1),(1),(1),
-                     (-1),(-1),(1)};
-                                   // 8 of vertex coords
-GLubyte indices_box[] = {0,1,2,3,
-                         0,3,4,5,
-                         0,5,6,1,
-                         1,6,7,2,
-                         7,4,3,2,
-                         4,7,6,5};
-GLfloat face_color[]={};
-
-int rows=10;
-int columns=10;
 float yLocation = 0.0f; // Keep track of our position on the y axis.
 float xLocation = 0.0f; // Keep track of our position on the x axis.
 float zLocation = 0.0f; // Keep track of our position on the z axis.
@@ -154,6 +138,16 @@ void CleanupExit()
 	exit (1);
 }
 
+float rad2deg(float radians)
+{
+	return (radians * 180) / PI;
+}
+
+float deg2rad(float degrees)
+{
+	return (degrees * PI) / 180;
+}
+
 /**
  * User_NewUser() - Callback Function
  *
@@ -167,13 +161,13 @@ void CleanupExit()
 void XN_CALLBACK_TYPE SessionStart(const XnPoint3D& ptFocus, void* UserCxt)
 {
   	g_bInSession = true;
-        g_pMainFlowRouter->SetActive(g_pMainSlider);
-        printf("/t set active/n");
+     g_pMainFlowRouter->SetActive(g_pMainSlider);
+     printf("/t set active/n");
 }
 void XN_CALLBACK_TYPE SessionEnd(void* UserCxt)
 {
  	g_bInSession = false;
-        g_pMainFlowRouter->SetActive(NULL);
+     g_pMainFlowRouter->SetActive(NULL);
 }
 
 void XN_CALLBACK_TYPE User_NewUser(xn::UserGenerator& generator, XnUserID nId, void* pCookie)
@@ -325,13 +319,13 @@ void XN_CALLBACK_TYPE MainSlider_OnValueChange(XnFloat fValue, void* cxt)
 	g_bActive = true;
 	g_bIsInput = true;
 	g_fValue = fValue;
-            printf("Slider pos :%f\n",fValue);
-        if(fValue<0.5)
-        zLocation-=(.5-(fValue))/10;
-        else
-          zLocation+=(fValue-.5)/10;
 
-          printf("slider value : %f\n",zLocation);
+     if(fValue<0.5){
+		printf("sorry, we only go forward\n");
+     }else{
+		yLocation-=((fValue-.5)/10) * sin(deg2rad(yRotationAngle));
+          xLocation-=((fValue-.5)/10) * cos(deg2rad(yRotationAngle));
+     }
 }
 
 void XN_CALLBACK_TYPE MainSlider_OnActivate(void* cxt)
@@ -373,13 +367,13 @@ void XN_CALLBACK_TYPE MainSlider_OnPrimaryDestroy(XnUInt32 nID, void* cxt)
 
 	static void XN_CALLBACK_TYPE Swipe_SwipeLeft(XnFloat fVelocity, XnFloat fAngle, void* cxt)
 	{
-	 yRotationAngle += 45.0f;
+	 yRotationAngle += ANGLE;
          printf("Swipe Left!\n");
         }
 
 	static void XN_CALLBACK_TYPE Swipe_SwipeRight(XnFloat fVelocity, XnFloat fAngle, void* cxt)
 	{
-         yRotationAngle -= 45.0f;
+         yRotationAngle -= ANGLE;
          printf("Swipe Right!\n");
 	}
 
@@ -390,16 +384,42 @@ void XN_CALLBACK_TYPE MainSlider_OnPrimaryDestroy(XnUInt32 nID, void* cxt)
 	}
 
 
+void drawCube(GLfloat vertices[8][3], GLubyte indices[6][4], GLfloat colors[6][3])
+{
+	glBegin(GL_QUADS);
+
+	for(int s=0; s < 6; s++)	// sides
+	{
+		//printf("Side: %d\n", s);
+		glColor3f(colors[0][0], colors[0][1], colors[0][2]);
+
+		//printf(" %d	%d	%d	%d\n", indices[s][0], indices[s][1], indices[s][2], indices[s][3]);
+		for(int i=0; i < 4; i++)	// indecies
+		{
+			int ind = indices[s][i];
+			//printf(" %d	%d	%d\n", (3*ind)+0, (3*ind)+1, (3*ind)+2);
+			glVertex3f(vertices[ind][0], vertices[ind][1], vertices[ind][2]);
+		}
+	}
+
+	glEnd();
+}
 
 
-        //draws the model
+
+//draws the robot
 void renderPrimitive (void) {
-        //glColor3f(.2,.3,.5);
-        glEnableClientState(GL_COLOR_ARRAY);
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(3, GL_FLOAT, 0, verts_box);
-        glColorPointer(3, GL_FLOAT,0,face_color);
-        glDrawElements(GL_QUADS, 24, GL_UNSIGNED_BYTE, indices_box);
+     //glColor3f(.2,.3,.5);
+	//glEnableClientState(GL_COLOR_ARRAY);
+	//glEnableClientState(GL_VERTEX_ARRAY);
+	//glVertexPointer(3, GL_FLOAT, 0, verts_robody);
+	//glColorPointer(3, GL_FLOAT,0,face_color);
+	//glDrawElements(GL_QUADS, 24, GL_UNSIGNED_BYTE, indices_robody);
+
+	drawCube(vertices_robody, indices_cube, color_robody);
+	drawCube(vertices_rohead, indices_cube, color_rohead);
+	drawCube(vertices_roleftarm, indices_cube, color_roleftarm);
+	drawCube(vertices_rorightarm, indices_cube, color_rorightarm);
 
         //draw axis lines
         glBegin(GL_LINES);
@@ -604,14 +624,14 @@ void glutKeyboardM (unsigned char key, int x, int y)
 	switch (key)
 	{
             case 'a':
-                yRotationAngle += 5.0f;
+                yRotationAngle += ANGLE;
                 break;
 
             case 'd':
-                    yRotationAngle -= 5.0f;
-                    break;
+                yRotationAngle -= ANGLE;
+                break;
             case 'w':
-           MainSlider_OnValueChange(1, NULL);
+			MainSlider_OnValueChange(1, NULL);
            break;
             case 'z':
                     MainSlider_OnValueChange(0, NULL);
