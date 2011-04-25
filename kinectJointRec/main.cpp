@@ -93,7 +93,7 @@ XnVFlowRouter*          g_pMainFlowRouter;
 //XnVPointDrawer*         g_pDrawer;
 
 
-const float ANGLE = 15.0f;
+const float ANGLE = 30.0f;
 const float PI = 3.14f;
 
 float yLocation = 0.0f; // Keep track of our position on the y axis.
@@ -320,11 +320,11 @@ void XN_CALLBACK_TYPE MainSlider_OnValueChange(XnFloat fValue, void* cxt)
 	g_bIsInput = true;
 	g_fValue = fValue;
 
-     if(fValue<0.5){
+     if(fValue>0.5){
 		printf("sorry, we only go forward\n");
      }else{
-		yLocation-=((fValue-.5)/10) * sin(deg2rad(yRotationAngle));
-          xLocation-=((fValue-.5)/10) * cos(deg2rad(yRotationAngle));
+          yLocation+=((fValue-.5)/10) * sin(deg2rad(yRotationAngle));
+          xLocation+=((fValue-.5)/10) * cos(deg2rad(yRotationAngle));
      }
 }
 
@@ -367,13 +367,13 @@ void XN_CALLBACK_TYPE MainSlider_OnPrimaryDestroy(XnUInt32 nID, void* cxt)
 
 	static void XN_CALLBACK_TYPE Swipe_SwipeLeft(XnFloat fVelocity, XnFloat fAngle, void* cxt)
 	{
-	 yRotationAngle += ANGLE;
+	 yRotationAngle -= ANGLE;
          printf("Swipe Left!\n");
         }
 
 	static void XN_CALLBACK_TYPE Swipe_SwipeRight(XnFloat fVelocity, XnFloat fAngle, void* cxt)
 	{
-         yRotationAngle -= ANGLE;
+         yRotationAngle += ANGLE;
          printf("Swipe Right!\n");
 	}
 
@@ -447,7 +447,7 @@ void renderPrimitive (void) {
      glViewport(0, 0, (GLsizei)width, (GLsizei)height); // Set our viewport to the size of our window
      glMatrixMode(GL_PROJECTION); // Switch to the projection matrix so that we can manipulate how our scene is viewed
      glLoadIdentity(); // Reset the projection matrix to the identity matrix so that we don't get any artifacts (cleaning up)
-     gluPerspective(30, (GLfloat)width / (GLfloat)height, 1.0, 100.0); // Set the Field of view angle (in degrees), the aspect ratio of our window, and the new and far planes
+     gluPerspective(100, (GLfloat)width / (GLfloat)height, 1.0, 100.0); // Set the Field of view angle (in degrees), the aspect ratio of our window, and the new and far planes
      glMatrixMode(GL_MODELVIEW); // Switch back to the model view matrix, so that we can start drawing shapes correctly
  }
 
@@ -719,7 +719,7 @@ int main(int argc, char **argv)
        g_Context.FindExistingNode(XN_NODE_TYPE_USER, g_UserGenerator);
        g_Context.FindExistingNode(XN_NODE_TYPE_HANDS, g_HandsGenerator);
 
-
+       
         if(g_Record){
                 recorder.Create(g_Context);     // creates a recorder node
                 recorder.SetDestination(XN_RECORD_MEDIUM_FILE,"recording.tmp.oni");
@@ -777,6 +777,7 @@ int main(int argc, char **argv)
          * @param null                          What the hell is a pCookie?
          * @param callback handle       XnCallbackHandle
       */
+ 
         g_UserGenerator.RegisterUserCallbacks(User_NewUser, User_LostUser, NULL, hUserCallbacks);
         g_UserGenerator.GetSkeletonCap().RegisterCalibrationCallbacks(
                         UserCalibration_CalibrationStart,
@@ -807,7 +808,7 @@ int main(int argc, char **argv)
         g_UserGenerator.GetSkeletonCap().SetSkeletonProfile(XN_SKEL_PROFILE_ALL);
         g_Context.StartGeneratingAll();//Make sure all generators are generating data.
 
-
+     
         glInit(&argc, argv);
         glutMainLoop();
 
