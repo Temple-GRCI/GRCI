@@ -34,12 +34,12 @@ GLfloat vertices_robody[8][3] = {
 };
 
 GLfloat color_robody[6][3] = {
-	{1.0f, 0.0f, 0.0f},	// back		black
-	{1.0f, 1.0f, 0.0f},	// right		yellow
-	{0.0f, 1.0f, 1.0f},	// top		cyan
-	{0.0f, 1.0f, 0.0f},	// left		green
-	{0.0f, 0.0f, 1.0f},	// bottom		blue
-	{1.0f, 0.0f, 0.0f}	// front		red
+	{1.0f, 0.0f, 0.0f},	// back		red
+	{1.0f, 1.0f, 0.0f},	// right
+	{0.0f, 1.0f, 1.0f},	// top
+	{0.0f, 1.0f, 0.0f},	// left
+	{0.0f, 0.0f, 1.0f},	// bottom
+	{1.0f, 0.0f, 0.0f}	// front
 };
 
 /***********************************************************
@@ -58,12 +58,12 @@ GLfloat vertices_rohead[8][3] = {
 };
 
 GLfloat color_rohead[6][3] = {
-	{0.0f, 0.0f, 1.0f},	// back		black
-	{1.0f, 1.0f, 0.0f},	// right		yellow
-	{0.0f, 1.0f, 1.0f},	// top		cyan
-	{0.0f, 1.0f, 0.0f},	// left		green
-	{0.0f, 0.0f, 1.0f},	// bottom		blue
-	{1.0f, 0.0f, 0.0f}	// front		red
+	{0.0f, 0.0f, 1.0f},	// back		blue
+	{1.0f, 1.0f, 0.0f},	// right
+	{0.0f, 1.0f, 1.0f},	// top
+	{0.0f, 1.0f, 0.0f},	// left
+	{0.0f, 0.0f, 1.0f},	// bottom
+	{1.0f, 0.0f, 0.0f}	// front
 };
 
 /***********************************************************
@@ -82,12 +82,12 @@ GLfloat vertices_roleftarm[8][3] = {
 };
 
 GLfloat color_roleftarm[6][3] = {
-	{0.0f, 1.0f, 0.0f},	// back		black
-	{1.0f, 1.0f, 0.0f},	// right		yellow
-	{0.0f, 1.0f, 1.0f},	// top		cyan
-	{0.0f, 1.0f, 0.0f},	// left		green
-	{0.0f, 0.0f, 1.0f},	// bottom		blue
-	{1.0f, 0.0f, 0.0f}	// front		red
+	{0.0f, 1.0f, 0.0f},	// back		green
+	{1.0f, 1.0f, 0.0f},	// right
+	{0.0f, 1.0f, 1.0f},	// top
+	{0.0f, 1.0f, 0.0f},	// left
+	{0.0f, 0.0f, 1.0f},	// bottom
+	{1.0f, 0.0f, 0.0f}	// front		
 };
 
 /***********************************************************
@@ -106,12 +106,12 @@ GLfloat vertices_rorightarm[8][3] = {
 };
 
 GLfloat color_rorightarm[6][3] = {
-	{0.0f, 1.0f, 0.0f},	// back		black
-	{1.0f, 1.0f, 0.0f},	// right		yellow
-	{0.0f, 1.0f, 1.0f},	// top		cyan
-	{0.0f, 1.0f, 0.0f},	// left		green
-	{0.0f, 0.0f, 1.0f},	// bottom		blue
-	{1.0f, 0.0f, 0.0f}	// front		red
+	{0.0f, 1.0f, 0.0f},	// back		green
+	{1.0f, 1.0f, 0.0f},	// right		
+	{0.0f, 1.0f, 1.0f},	// top		
+	{0.0f, 1.0f, 0.0f},	// left		
+	{0.0f, 0.0f, 1.0f},	// bottom		
+	{1.0f, 0.0f, 0.0f}	// front		
 };
 
 #endif	/* POINTSINIT_H */
