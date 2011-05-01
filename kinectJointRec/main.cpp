@@ -182,12 +182,12 @@ float deg2rad (float degrees)
 	return (degrees * PI) / 180;
 }
 
-
-// session ( insession, not insession, quick refocus
-// not: looking for focus gesture
-// in: tracking the hand
-// quick: picks up hand again if it comes back in relative to where it left
-
+/**
+ * Session Manager - ( in-session, not in-session, quick-refocus )
+ *	in:	tracking the users hand.
+ *	not:	looking for focus gesture.
+ *	qr:	picks up hand again if it comes back in relative position to where it left
+ */
 
 void XN_CALLBACK_TYPE SessionStart (const XnPoint3D& ptFocus, void* UserCxt)
 {
@@ -382,7 +382,7 @@ void XN_CALLBACK_TYPE MainSlider_OnDeactivate (void* cxt)
  * MainSlider_OnPrimaryCreate() - Callback Function
  *
  *
- * @param hand		XnVHandPointContext*	unused
+ * @param hand		XnVHandPointContext*		unused
  * @param ptFocus	XnPoint3D&				unused
  * @param cxt		void*					unused
  */
@@ -398,7 +398,7 @@ void XN_CALLBACK_TYPE MainSlider_OnPrimaryCreate (const XnVHandPointContext* han
  * MainSlider_OnPrimaryDestroy() - Callback Function
  *
  *
- * @param nID	XnUInt32	User ID (unused)
+ * @param nID	XnUInt32		User ID (unused)
  * @param cxt	void*		unused
  */
 
@@ -407,8 +407,17 @@ void XN_CALLBACK_TYPE MainSlider_OnPrimaryDestroy (XnUInt32 nID, void* cxt)
 	g_bIsInput = false;
 }
 
+/**
+ * Swipe_SwipeUp() - Callback Function
+ *
+ * This function is used to reset our virtual robot to
+ * its starting location.
+ *
+ * @param fVelocity		XnFloat
+ * @param fAngle		XnFloat
+ * @param cxt			void*
+ */
 
-// Swipe detector Callbacks
 static void XN_CALLBACK_TYPE Swipe_SwipeUp (XnFloat fVelocity, XnFloat fAngle, void* cxt)
 {
 	printf("Swipe Up!... RESET\n");
@@ -419,6 +428,18 @@ static void XN_CALLBACK_TYPE Swipe_SwipeUp (XnFloat fVelocity, XnFloat fAngle, v
 	yRotationAngle = 0.0f;
 }
 
+/**
+ * Swipe_SwipeLeft() - Callback Function
+ *
+ * This function will turn the robot left the defined angle.
+ * If the geture is performed with an increased velocity, the
+ * robot will be turned left again by the defined angle.
+ *
+ * @param fVelocity		XnFloat
+ * @param fAngle		XnFloat
+ * @param cxt			void*
+ */
+
 static void XN_CALLBACK_TYPE Swipe_SwipeLeft (XnFloat fVelocity, XnFloat fAngle, void* cxt)
 {
 	yRotationAngle -= ANGLE;
@@ -428,6 +449,18 @@ static void XN_CALLBACK_TYPE Swipe_SwipeLeft (XnFloat fVelocity, XnFloat fAngle,
 	}
 	printf("Swipe Left! Velocity %f\n", fVelocity);
 }
+
+/**
+ * Swipe_SwipeRight() - Callback Function
+ *
+ * This function will turn the robot right the defined angle.
+ * If the geture is performed with an increased velocity, the
+ * robot will be turned right again by the defined angle.
+ *
+ * @param fVelocity		XnFloat
+ * @param fAngle		XnFloat
+ * @param cxt			void*
+ */
 
 static void XN_CALLBACK_TYPE Swipe_SwipeRight (XnFloat fVelocity, XnFloat fAngle, void* cxt)
 {
@@ -649,7 +682,7 @@ void glutKeyboardS (unsigned char key, int x, int y)
 			break;
 		case'r':
 			g_bRecord = !g_bRecord;
-			if(!g_bRecord)
+			if (!g_bRecord)
 			{
 				outpnt << "$\n";
 			}
@@ -697,7 +730,7 @@ void glutDisplayM (void)
  *
  * **** Only recieves input for keys pressed while in the model window.
  *
- * @param key	unsigned char	name/value of the key pressed
+ * @param key		unsigned char		name/value of the key pressed
  * @param x		int				purpose unknown (Possibly mouse coords)
  * @param y		int				purpose unknown
  */
@@ -727,7 +760,7 @@ void glutKeyboardM (unsigned char key, int x, int y)
 /**
  * glutIdleSM()
  *
- *
+ * 
  *
  *
  */
@@ -752,7 +785,7 @@ void glutIdleSM (void)
  *
  * Configuration for glut.
  *
- * @param pargc		int*		points to the number of command line args.
+ * @param pargc	int*			points to the number of command line args.
  * @param argv		char**		points to the command line args.
  */
 
@@ -807,8 +840,7 @@ int main(int argc, char **argv)
 	// Must be called before any OpenNI function ( except xnInitFromXmlFile() )
 	nRetVal = g_Context.InitFromXmlFile("KinConfig.xml");
 	CHECK_RC(nRetVal, "InitFromXml");
-
-
+	
 	// Returns the first found existing node of the specified type(pointer to context. ,type,handle to node)
 	nRetVal = g_Context.FindExistingNode(XN_NODE_TYPE_DEPTH, g_DepthGenerator);
 	nRetVal = g_Context.FindExistingNode(XN_NODE_TYPE_USER, g_UserGenerator);
@@ -843,9 +875,9 @@ int main(int argc, char **argv)
 	g_pSwipeDetector->RegisterSwipeRight(NULL, &Swipe_SwipeRight);
 
 	// Sets sensitivity of swipe recognition
-	g_pSwipeDetector->SetMotionTime(700);//set how long the gesture needs to be to recognize
+	g_pSwipeDetector->SetMotionTime(700);		// how long the gesture needs to be to recognize
 	g_pSwipeDetector->SetXAngleThreshold(45);
-	g_pSwipeDetector->SetSteadyDuration(60);//set how long the hand has to be stable
+	g_pSwipeDetector->SetSteadyDuration(60);	// how long the hand has to be stable
 
 	// Create the flow manager
 	g_pMainFlowRouter = new XnVFlowRouter;
