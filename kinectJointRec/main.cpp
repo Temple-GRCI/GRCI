@@ -22,10 +22,10 @@
 
 
 /**
- * Joint Recognition
+ * GRCI
+ * Gesture Recognition Control Interface
  *
  * Changes:
- *	* Status updates have been removed to improve readability (PR)
  *	* Added comment blocks for all functions (EO)
  *
  * @project     kinectJointRec
@@ -66,7 +66,7 @@
 
 #define SAMPLE_XML_PATH "KinConfig.xml"
 
-#define CHECK_RC(nRetVal, what)										\
+#define CHECK_RC(nRetVal, what)									\
 	if (nRetVal != XN_STATUS_OK)									\
 	{																\
 		printf("%s failed: %s\n", what, xnGetStatusString(nRetVal));\
@@ -76,12 +76,12 @@
 // Globals
 //---------------------------------------------------------------------------
 //open NI objects
-xn::Context g_Context;// represents an OpenNi Context Object
-xn::DepthGenerator g_DepthGenerator;
-xn::UserGenerator g_UserGenerator;
-xn::HandsGenerator g_HandsGenerator;
-xn::ImageGenerator g_ImageGenerator;
-xn::Recorder recorder;
+xn::Context         g_Context;// represents an OpenNi Context Object
+xn::DepthGenerator  g_DepthGenerator;
+xn::UserGenerator   g_UserGenerator;
+xn::HandsGenerator  g_HandsGenerator;
+xn::ImageGenerator  g_ImageGenerator;
+xn::Recorder        recorder;
 
 //Nite objects
 XnVSessionManager*      g_SessionManager= NULL;
@@ -90,19 +90,17 @@ XnVPushDetector*        g_pMainPush;
 XnVSelectableSlider1D*  g_pMainSlider;
 XnVSwipeDetector*       g_pSwipeDetector;
 XnVFlowRouter*          g_pMainFlowRouter;
-//XnVPointDrawer*         g_pDrawer;
 
 
 const float ANGLE = 30.0f;
 const float PI = 3.14f;
 
-float yLocation = 0.0f; // Keep track of our position on the y axis.
-float xLocation = 0.0f; // Keep track of our position on the x axis.
-float zLocation = 0.0f; // Keep track of our position on the z axis.
-float xRotationAngle = 0.0f; // The angle of rotation for our object
-float yRotationAngle = 0.0f; // The angle of rotation for our object
+float yLocation = 0.0f; // Keep track of position on the y axis.
+float xLocation = 0.0f; // Keep track of position on the x axis.
+float zLocation = 0.0f; // Keep track of position on the z axis.
+float xRotationAngle = 0.0f; // The angle of rotation for model
+float yRotationAngle = 0.0f; // The angle of rotation for model
 XnFloat g_fValue = 0.5f;
-
 int win1,win2;
 
 //Session state
@@ -120,7 +118,7 @@ XnBool g_bPrintID = TRUE;
 XnBool g_bPrintState = TRUE;
 //booleans recording and playback of files
 XnBool g_runfile = FALSE; // Use mock node(T) or kinect(F)
-XnBool g_Record = FALSE; // Record a new .oni file(T)
+XnBool g_Record = TRUE; // Record a new .oni file(T)
 XnBool g_bPause = false;
 XnBool g_bRecord = false;
 
@@ -178,15 +176,15 @@ void XN_CALLBACK_TYPE User_NewUser(xn::UserGenerator& generator, XnUserID nId, v
 	{
 		/**
 		 * GetPoseDetectionCap()
-		 * 
+		 *
 		 * Gets a PoseDetectionCapability object for accessing
 		 * Pose-Detection functionality (allows a user generator to
 		 * recognize when a user is in a specific pose)
            */
-		
+
 		// starts detection for specified pose and the user id
           g_UserGenerator.GetPoseDetectionCap().StartPoseDetection(g_strPose, nId);
-          printf("**** looking for pose named: %s\n",g_strPose);
+          printf("Looking for Calibration Pose: %s\n",g_strPose);
      }
 	else
 	{
@@ -220,7 +218,7 @@ void XN_CALLBACK_TYPE User_LostUser(xn::UserGenerator& generator, XnUserID nId, 
  * @param pCookie
  */
 
-void XN_CALLBACK_TYPE UserPose_PoseDetected(xn::PoseDetectionCapability& capability, 
+void XN_CALLBACK_TYPE UserPose_PoseDetected(xn::PoseDetectionCapability& capability,
 								    const XnChar* strPose,
 								    XnUserID nId,
 								    void* pCookie)
@@ -241,7 +239,7 @@ void XN_CALLBACK_TYPE UserPose_PoseDetected(xn::PoseDetectionCapability& capabil
  * @param pCookie
  */
 
-void XN_CALLBACK_TYPE UserCalibration_CalibrationStart(xn::SkeletonCapability& capability, 
+void XN_CALLBACK_TYPE UserCalibration_CalibrationStart(xn::SkeletonCapability& capability,
 											XnUserID nId,
 											void* pCookie)
 {
@@ -310,7 +308,7 @@ void XN_CALLBACK_TYPE MainSlider_OnSelect(XnInt32 nItem, XnVDirection dir, void*
 
 	else
 	{
-		printf("Slider: Bad direction for selection: %s\n", XnVDirectionAsString(dir));
+		
 	}
 }
 
@@ -321,7 +319,7 @@ void XN_CALLBACK_TYPE MainSlider_OnValueChange(XnFloat fValue, void* cxt)
 	g_fValue = fValue;
 
      if(fValue>0.5){
-		printf("sorry, we only go forward\n");
+
      }else{
           yLocation+=((fValue-.5)/10) * sin(deg2rad(yRotationAngle));
           xLocation+=((fValue-.5)/10) * cos(deg2rad(yRotationAngle));
@@ -347,41 +345,34 @@ void XN_CALLBACK_TYPE MainSlider_OnPrimaryDestroy(XnUInt32 nID, void* cxt)
 	g_bIsInput = false;
 }
 
-
-
 // Swipe detector Callbacks
-	static void XN_CALLBACK_TYPE Swipe_SwipeUp(XnFloat fVelocity, XnFloat fAngle, void* cxt)
+static void XN_CALLBACK_TYPE Swipe_SwipeUp(XnFloat fVelocity, XnFloat fAngle, void* cxt)
 	{
-		printf("Swipe Up!\n");
-                yLocation = 0.0f; // Keep track of our position on the y axis.
-                xLocation = 0.0f; // Keep track of our position on the x axis.
-                zLocation = 0.0f; // Keep track of our position on the z axis.
-                xRotationAngle = 0.0f; // The angle of rotation for our object
+		printf("Swipe Up!.. RESET\n");
+                yLocation = 0.0f; 
+                xLocation = 0.0f; 
+                zLocation = 0.0f; 
+                xRotationAngle = 0.0f;
                 yRotationAngle = 0.0f;
 	}
 
-	static void XN_CALLBACK_TYPE Swipe_SwipeDown(XnFloat fVelocity, XnFloat fAngle, void* cxt)
+static void XN_CALLBACK_TYPE Swipe_SwipeLeft(XnFloat fVelocity, XnFloat fAngle, void* cxt)
 	{
-	printf("Swipe Down!\n");
-	}
-
-	static void XN_CALLBACK_TYPE Swipe_SwipeLeft(XnFloat fVelocity, XnFloat fAngle, void* cxt)
-	{
-	 yRotationAngle -= ANGLE;
-         printf("Swipe Left!\n");
+         yRotationAngle -= ANGLE;
+         if (fVelocity>0.35)
+             yRotationAngle -= ANGLE;
+             printf("Swipe Left! Velocity %f\n",fVelocity);
         }
 
-	static void XN_CALLBACK_TYPE Swipe_SwipeRight(XnFloat fVelocity, XnFloat fAngle, void* cxt)
+static void XN_CALLBACK_TYPE Swipe_SwipeRight(XnFloat fVelocity, XnFloat fAngle, void* cxt)
 	{
+            
          yRotationAngle += ANGLE;
-         printf("Swipe Right!\n");
+             if (fVelocity>0.35)
+             yRotationAngle += ANGLE;
+         printf("Swipe Right! Velocity %f\n",fVelocity);
 	}
-
-        //push detector callbacks
-        static void XN_CALLBACK_TYPE Push_Pushed(XnFloat fVelocity, XnFloat fAngle, void* cxt)
-	{
-	printf("Push! velocity %f angle %f\n",fVelocity,fAngle);
-	}
+    
 
 
 void drawCube(GLfloat vertices[8][3], GLubyte indices[6][4], GLfloat colors[6][3])
@@ -390,33 +381,22 @@ void drawCube(GLfloat vertices[8][3], GLubyte indices[6][4], GLfloat colors[6][3
 
 	for(int s=0; s < 6; s++)	// sides
 	{
-		//printf("Side: %d\n", s);
+		
 		glColor3f(colors[0][0], colors[0][1], colors[0][2]);
 
-		//printf(" %d	%d	%d	%d\n", indices[s][0], indices[s][1], indices[s][2], indices[s][3]);
-		for(int i=0; i < 4; i++)	// indecies
+		for(int i=0; i < 4; i++)	
 		{
 			int ind = indices[s][i];
-			//printf(" %d	%d	%d\n", (3*ind)+0, (3*ind)+1, (3*ind)+2);
 			glVertex3f(vertices[ind][0], vertices[ind][1], vertices[ind][2]);
 		}
 	}
-
 	glEnd();
 }
 
 
-
 //draws the robot
 void renderPrimitive (void) {
-     //glColor3f(.2,.3,.5);
-	//glEnableClientState(GL_COLOR_ARRAY);
-	//glEnableClientState(GL_VERTEX_ARRAY);
-	//glVertexPointer(3, GL_FLOAT, 0, verts_robody);
-	//glColorPointer(3, GL_FLOAT,0,face_color);
-	//glDrawElements(GL_QUADS, 24, GL_UNSIGNED_BYTE, indices_robody);
-
-	drawCube(vertices_robody, indices_cube, color_robody);
+ 	drawCube(vertices_robody, indices_cube, color_robody);
 	drawCube(vertices_rohead, indices_cube, color_rohead);
 	drawCube(vertices_roleftarm, indices_cube, color_roleftarm);
 	drawCube(vertices_rorightarm, indices_cube, color_rorightarm);
@@ -495,10 +475,6 @@ void glutDisplayS (void)
 
 }
 
-
-
-
-
 /**
  * glutIdle()
  *
@@ -565,7 +541,7 @@ void glutKeyboardS (unsigned char key, int x, int y)
 				printf("Record on/off\n");
 			break;
 	}
-} 
+}
 
 
 void glutDisplayM (void)
@@ -575,20 +551,14 @@ void glutDisplayM (void)
 
 	// Process the data
 	g_SessionManager->Update(&g_Context);
-   glClearColor(0.8f,0.8f,0.8f,1.0f);
-     glClear(GL_COLOR_BUFFER_BIT);
-     glLoadIdentity();//loads identity matrix to reset drawings
-      glTranslatef(0.0f,0.0f,-15.0);
-
-      glTranslatef(xLocation,yLocation, zLocation);
-      //glTranslatef(xLocation*cos(xRotationAngle), yLocation*sin(yRotationAngle), 0.0f);
-
-    glRotatef(yRotationAngle, 0.0f, 0.0f, 1.0f);
-
-     renderPrimitive();
-     glFlush();
-
-
+        glClearColor(0.8f,0.8f,0.8f,1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glLoadIdentity();//loads identity matrix to reset drawings
+        glTranslatef(0.0f,0.0f,-15.0);
+        glTranslatef(xLocation,yLocation, zLocation);
+        glRotatef(yRotationAngle, 0.0f, 0.0f, 1.0f);
+        renderPrimitive();
+        glFlush();
 }
 
 void glutIdleM (void)
@@ -597,7 +567,6 @@ void glutIdleM (void)
 		CleanupExit();
 	}
         glutDisplayM();
-
 	// Display the frame
 	glutPostRedisplay();
 }
@@ -650,8 +619,6 @@ void glutKeyboardM (unsigned char key, int x, int y)
  * @param pargc	int*		points to the number of command line args.
  * @param argv		char**	points to the command line args.
  */
-
-
 void glInit (int * pargc, char ** argv)
 {
         glutInit(pargc, argv);
@@ -671,36 +638,22 @@ void glInit (int * pargc, char ** argv)
         glEnableClientState(GL_VERTEX_ARRAY);
         glDisableClientState(GL_COLOR_ARRAY);
 
-
         ////////////////window 2//////////////////////
-         
 	glutInitDisplayMode(GLUT_SINGLE);
 	glutInitWindowSize(GL_WIN_SIZE_X, GL_WIN_SIZE_Y);
-	//create first window
-
-        glutInitWindowPosition (1100, 100);
+        glutInitWindowPosition (0, 700);
         win2=glutCreateWindow ("Box");
 
-	
-	glutKeyboardFunc(glutKeyboardM);
+        glutKeyboardFunc(glutKeyboardM);
 	glutReshapeFunc(reshape);
         glutDisplayFunc(glutDisplayM);
 	glutIdleFunc(glutIdleSM);
-
 }
 
-#define CHECK_ERRORS(rc, errors, what)		\
-	if (rc == XN_STATUS_NO_NODE_PRESENT)	\
-{										\
-	XnChar strError[1024];				\
-	errors.ToString(strError, 1024);	\
-	printf("%s\n", strError);			\
-	return (rc);						\
-}
 
 int main(int argc, char **argv)
 {
-        XnStatus rc = XN_STATUS_OK;
+        XnStatus nRetVal = XN_STATUS_OK;
 
         // Handles to a registered callback function
         XnCallbackHandle hUserCallbacks, hCalibrationCallbacks, hPoseCallbacks;
@@ -711,21 +664,20 @@ int main(int argc, char **argv)
                          "p-pause \n r-record data points\n";
 
         // must be called before any OpenNI function ( except xnInitFromXmlFile() )
-        rc = g_Context.InitFromXmlFile("KinConfig.xml");
-
+        nRetVal = g_Context.InitFromXmlFile("KinConfig.xml");
+        CHECK_RC(nRetVal, "InitFromXml");
 
         // Returns the first found existing node of the specified type(pointer to context. ,type,handle to node)
-       g_Context.FindExistingNode(XN_NODE_TYPE_DEPTH, g_DepthGenerator);
-       g_Context.FindExistingNode(XN_NODE_TYPE_USER, g_UserGenerator);
-       g_Context.FindExistingNode(XN_NODE_TYPE_HANDS, g_HandsGenerator);
+       nRetVal=g_Context.FindExistingNode(XN_NODE_TYPE_DEPTH, g_DepthGenerator);
+       nRetVal=g_Context.FindExistingNode(XN_NODE_TYPE_USER, g_UserGenerator);
+       nRetVal=g_Context.FindExistingNode(XN_NODE_TYPE_HANDS, g_HandsGenerator);
+       CHECK_RC(nRetVal, "Find Existing Node");
 
-       
         if(g_Record){
                 recorder.Create(g_Context);     // creates a recorder node
                 recorder.SetDestination(XN_RECORD_MEDIUM_FILE,"recording.tmp.oni");
                 recorder.AddNodeToRecording(g_DepthGenerator);
-                //recorder.AddNodeToRecording(g_ImageGenerator);
-        }
+         }
 
        	// Create and initialize point tracker
 	g_SessionManager = new XnVSessionManager;
@@ -745,17 +697,14 @@ int main(int argc, char **argv)
         //create swipe detector
         g_pSwipeDetector= new XnVSwipeDetector();
         g_pSwipeDetector->RegisterSwipeUp(NULL, &Swipe_SwipeUp);
-	g_pSwipeDetector->RegisterSwipeDown(NULL, &Swipe_SwipeDown);
 	g_pSwipeDetector->RegisterSwipeLeft(NULL, &Swipe_SwipeLeft);
 	g_pSwipeDetector->RegisterSwipeRight(NULL, &Swipe_SwipeRight);
 
         //sets sensitivity of swipe recognition
-        g_pSwipeDetector->SetMotionTime(500);//set how long the gesture needs to be to recognize
-        g_pSwipeDetector->SetSteadyDuration(45);//set how long the hand has to be stable
-
-        //create main push detector
-        g_pMainPush= new XnVPushDetector();
-        g_pMainPush->RegisterPush(NULL, &Push_Pushed);
+        g_pSwipeDetector->SetMotionTime(700);//set how long the gesture needs to be to recognize
+        g_pSwipeDetector->SetXAngleThreshold(45);
+        g_pSwipeDetector->SetSteadyDuration(60);//set how long the hand has to be stable
+     
 
         // Create the flow manager
 	g_pMainFlowRouter = new XnVFlowRouter;
@@ -763,10 +712,7 @@ int main(int argc, char **argv)
 	// Connect flow manager to the point tracker
 	g_SessionManager->AddListener(g_pMainFlowRouter);
         g_SessionManager->AddListener(g_pSwipeDetector);
-        g_SessionManager->AddListener(g_pMainPush);
-	//create point drawer
-        //g_pDrawer = new XnVPointDrawer(100, g_DepthGenerator);//takes in history and depth generator
-        //g_pMainFlowRouter->SetActive(g_pDrawer);
+
         /**
          * Register____Callbacks()
          *
@@ -777,7 +723,7 @@ int main(int argc, char **argv)
          * @param null                          What the hell is a pCookie?
          * @param callback handle       XnCallbackHandle
       */
- 
+
         g_UserGenerator.RegisterUserCallbacks(User_NewUser, User_LostUser, NULL, hUserCallbacks);
         g_UserGenerator.GetSkeletonCap().RegisterCalibrationCallbacks(
                         UserCalibration_CalibrationStart,
@@ -808,7 +754,7 @@ int main(int argc, char **argv)
         g_UserGenerator.GetSkeletonCap().SetSkeletonProfile(XN_SKEL_PROFILE_ALL);
         g_Context.StartGeneratingAll();//Make sure all generators are generating data.
 
-     
+
         glInit(&argc, argv);
         glutMainLoop();
 

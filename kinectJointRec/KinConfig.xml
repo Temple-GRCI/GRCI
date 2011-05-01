@@ -14,12 +14,12 @@
        
 
 	<ProductionNodes>
-  <!--
-<Recording file="SkeletonRec.oni" />
+
+<Recording file="DEMO.oni" />
 <Node type="Gesture" />
 		<Node type="Hands" />
                 <Node type="User" />
--->
+<!--
 
 		<Node type="Image" name="Image1">
 			<Configuration>
@@ -36,6 +36,6 @@
 		     <Node type="Gesture" />
 		<Node type="Hands" />
                 <Node type="User" />
-
+-->
         </ProductionNodes>
 </OpenNI>
