@@ -192,14 +192,14 @@ float deg2rad (float degrees)
 
 void XN_CALLBACK_TYPE SessionStart (const XnPoint3D& ptFocus, void* UserCxt)
 {
-  	g_bInSession = true;
-     g_pMainFlowRouter->SetActive(g_pMainSlider);
-     printf("/t set active/n");
+	g_bInSession = true;
+	g_pMainFlowRouter->SetActive(g_pMainSlider);
+	printf("/t set active/n");
 }
 void XN_CALLBACK_TYPE SessionEnd (void* UserCxt)
 {
- 	g_bInSession = false;
-     g_pMainFlowRouter->SetActive(NULL);
+	g_bInSession = false;
+	g_pMainFlowRouter->SetActive(NULL);
 }
 
 /**
@@ -347,7 +347,7 @@ void XN_CALLBACK_TYPE MainSlider_OnValueChange (XnFloat fValue, void* cxt)
 	g_fValue = fValue;
 
 	//  range (0, 0.5) = Foward
-	if (fValue<0.5)
+	if (fValue < 0.5)
 	{
 		yLocation+=((fValue-.5)/10) * sin(deg2rad(yRotationAngle));
 		xLocation+=((fValue-.5)/10) * cos(deg2rad(yRotationAngle));
@@ -490,13 +490,13 @@ void drawCube (GLfloat vertices[8][3],
 	glBegin(GL_QUADS);
 
 	// loop for each side
-	for(int s=0; s < 6; s++)
+	for (int s=0; s < 6; s++)
 	{
 		// set the color of the face
 		glColor3f(colors[0][0], colors[0][1], colors[0][2]);
 
 		// loop through all the indices
-		for(int i=0; i < 4; i++)
+		for (int i=0; i < 4; i++)
 		{
 			int ind = indices[s][i];
 			// draw the vertex used for this face
@@ -622,7 +622,7 @@ void glutDisplayS (void)
 	{
 		// Read next available data
 		g_Context.WaitAnyUpdateAll();
-		if(g_Record)
+		if (g_Record)
 		{
 			recorder.Record();
 		}
@@ -715,12 +715,12 @@ void glutDisplayM (void)
 	g_SessionManager->Update(&g_Context);
 	glClearColor(0.8f,0.8f,0.8f,1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
-     glLoadIdentity();//loads identity matrix to reset drawings
+	glLoadIdentity();//loads identity matrix to reset drawings
 	glTranslatef(0.0f,0.0f,-15.0);
 	glTranslatef(xLocation,yLocation, zLocation);
 	glRotatef(yRotationAngle, 0.0f, 0.0f, 1.0f);
-     renderPrimitive();
-     glFlush();
+	renderPrimitive();
+	glFlush();
 }
 
 /**
