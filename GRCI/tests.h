@@ -8,6 +8,9 @@
 #include <stdio.h>
 #include <string>
 
+float rad2deg (float radians);
+float deg2rad (float degrees);
+
 bool assertEquals(float expected, float actual, char* message)
 {
 	if (expected != actual)

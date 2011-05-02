@@ -82,7 +82,7 @@
 
 
 // OpenNI objects
-xn::Context				g_Context;			// represents an OpenNI Context Object
+xn::Context			g_Context;			// represents an OpenNI Context Object
 xn::DepthGenerator		g_DepthGenerator;
 xn::UserGenerator		g_UserGenerator;
 xn::HandsGenerator		g_HandsGenerator;
@@ -120,7 +120,7 @@ XnBool g_bNeedPose = false;
 XnChar g_strPose[20] = "";
 
 // Booleans for glwindow
-XnBool g_bDrawBackground	= true;
+XnBool g_bDrawBackground		= true;
 XnBool g_bDrawPixels		= true;
 XnBool g_bDrawSkeleton		= true;
 XnBool g_bPrintID			= true;
@@ -128,8 +128,8 @@ XnBool g_bPrintState		= true;
 
 // Booleans recording and playback of files
 XnBool g_runfile	= false; // Use mock node(T) or kinect(F)
-XnBool g_Record		= false; // Record a new .oni file(T)
-XnBool g_bPause		= false;
+XnBool g_Record	= false; // Record a new .oni file(T)
+XnBool g_bPause	= false;
 XnBool g_bRecord	= false;
 
 XnBool g_bQuit = false;
