@@ -27,8 +27,8 @@
  * Changes:
  *	* Status updates have been removed to improve readability (PR)
  *	* Added comment blocks for all functions (EO)
- *   * Merged joint recognition with the virtual robot. (PR)
- *   * More documentation (EO)
+ *	* Merged joint recognition with the virtual robot. (PR)
+ *	* More documentation (EO)
  *
  * @project     kinectJointRec
  * @author      CIS 3287 - G.R.C.I. Team
@@ -57,11 +57,12 @@
 
 
 #include <fstream>
-#include<stdio.h>
-#include<iostream>
+#include <stdio.h>
+#include <iostream>
 #include <GL/glut.h>
 
 #include "pointsInit.h"
+#include "tests.h"
 
 #define GL_WIN_SIZE_X 720
 #define GL_WIN_SIZE_Y 480
@@ -81,7 +82,7 @@
 
 
 // OpenNI objects
-xn::Context			g_Context;			// represents an OpenNI Context Object
+xn::Context				g_Context;			// represents an OpenNI Context Object
 xn::DepthGenerator		g_DepthGenerator;
 xn::UserGenerator		g_UserGenerator;
 xn::HandsGenerator		g_HandsGenerator;
@@ -96,8 +97,8 @@ XnVSwipeDetector*       g_pSwipeDetector;
 XnVFlowRouter*          g_pMainFlowRouter;
 
 // Stuff for the Model
-const float ANGLE = 30.0f;
-const float PI = 3.14f;
+const float ANGLE	= 30.0f;
+const float PI		= 3.14159265f;
 
 float yLocation = 0.0f; // Keep track of our position on the y axis.
 float xLocation = 0.0f; // Keep track of our position on the x axis.
@@ -110,8 +111,8 @@ int win1,	// Skeleton
     win2;	// Model
 
 // Session state
-XnBool g_bActive = false;
-XnBool g_bIsInput = false;
+XnBool g_bActive	= false;
+XnBool g_bIsInput	= false;
 XnBool g_bInSession = false;
 
 // Skeleton detection
@@ -119,17 +120,17 @@ XnBool g_bNeedPose = false;
 XnChar g_strPose[20] = "";
 
 // Booleans for glwindow
-XnBool g_bDrawBackground = true;
-XnBool g_bDrawPixels = true;
-XnBool g_bDrawSkeleton = true;
-XnBool g_bPrintID = true;
-XnBool g_bPrintState = true;
+XnBool g_bDrawBackground	= true;
+XnBool g_bDrawPixels		= true;
+XnBool g_bDrawSkeleton		= true;
+XnBool g_bPrintID			= true;
+XnBool g_bPrintState		= true;
 
 // Booleans recording and playback of files
-XnBool g_runfile = false; // Use mock node(T) or kinect(F)
-XnBool g_Record = false;  // Record a new .oni file(T)
-XnBool g_bPause = false;
-XnBool g_bRecord = false;
+XnBool g_runfile	= false; // Use mock node(T) or kinect(F)
+XnBool g_Record		= false; // Record a new .oni file(T)
+XnBool g_bPause		= false;
+XnBool g_bRecord	= false;
 
 XnBool g_bQuit = false;
 
@@ -184,9 +185,9 @@ float deg2rad (float degrees)
 
 /**
  * Session Manager - ( in-session, not in-session, quick-refocus )
- *	in:	tracking the users hand.
+ *	in:		tracking the users hand.
  *	not:	looking for focus gesture.
- *	qr:	picks up hand again if it comes back in relative position to where it left
+ *	qr:		picks up hand again if it comes back in relative position to where it left
  */
 
 void XN_CALLBACK_TYPE SessionStart (const XnPoint3D& ptFocus, void* UserCxt)
@@ -256,7 +257,7 @@ void XN_CALLBACK_TYPE User_LostUser (xn::UserGenerator& generator, XnUserID nId,
  * Executes when a pose is detected by OpenNI.
  *
  * @param capability
- * @param strPose		XnChar*	Name of the detected pose.
+ * @param strPose		XnChar*		Name of the detected pose.
  * @param nId			XnUserID	User who posed.
  * @param pCookie
  */
@@ -297,7 +298,7 @@ void XN_CALLBACK_TYPE UserCalibration_CalibrationStart (xn::SkeletonCapability& 
  *
  * @param capability
  * @param nId			XnUserID	The user's number.
- * @param bSuccess		XnBool	True if calibration succeeded.
+ * @param bSuccess		XnBool		True if calibration succeeded.
  * @param pCookie
  */
 
@@ -382,7 +383,7 @@ void XN_CALLBACK_TYPE MainSlider_OnDeactivate (void* cxt)
  * MainSlider_OnPrimaryCreate() - Callback Function
  *
  *
- * @param hand		XnVHandPointContext*		unused
+ * @param hand		XnVHandPointContext*	unused
  * @param ptFocus	XnPoint3D&				unused
  * @param cxt		void*					unused
  */
@@ -398,7 +399,7 @@ void XN_CALLBACK_TYPE MainSlider_OnPrimaryCreate (const XnVHandPointContext* han
  * MainSlider_OnPrimaryDestroy() - Callback Function
  *
  *
- * @param nID	XnUInt32		User ID (unused)
+ * @param nID	XnUInt32	User ID (unused)
  * @param cxt	void*		unused
  */
 
@@ -730,9 +731,9 @@ void glutDisplayM (void)
  *
  * **** Only recieves input for keys pressed while in the model window.
  *
- * @param key		unsigned char		name/value of the key pressed
- * @param x		int				purpose unknown (Possibly mouse coords)
- * @param y		int				purpose unknown
+ * @param key	unsigned char		name/value of the key pressed
+ * @param x		int					purpose unknown (Possibly mouse coords)
+ * @param y		int					purpose unknown
  */
 
 void glutKeyboardM (unsigned char key, int x, int y)
@@ -785,7 +786,7 @@ void glutIdleSM (void)
  *
  * Configuration for glut.
  *
- * @param pargc	int*			points to the number of command line args.
+ * @param pargc		int*		points to the number of command line args.
  * @param argv		char**		points to the command line args.
  */
 
@@ -828,6 +829,9 @@ void glInit (int * pargc, char ** argv)
 int main(int argc, char **argv)
 {
 	XnStatus nRetVal = XN_STATUS_OK;
+	
+	// Run Tests
+	run_tests();
 
 	// Handles to a registered callback function
 	XnCallbackHandle hUserCallbacks, hCalibrationCallbacks, hPoseCallbacks;
