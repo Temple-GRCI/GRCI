@@ -1,0 +1,18 @@
+Eugene 610 710 1015
+
+1.) extend DataSequence to ENCAPSULATE DATA
+	x words[]
+	y label[]
+
+	1 sequence = 1 sentence
+
+2.) FeatureGenImpl -> OVERWRITE addfeature(FeatureTypes x) addFeature(new EdgeFeatureType
+		  -> NEED EDGE FEATURE TYPES
+		  -> look at code for WordFeatureType
+	contains FeatureTypes (gets called for each token in Data Sequence)
+		value
+		state[ V, A, N, É] [0, 1, 2, É]
+		name(id)
+	word
+	ending (2)
+	
